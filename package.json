@@ -1,7 +1,29 @@
 {
   "name": "smart-reach",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "A powerful email outreach automation platform built with Next.js, Supabase, and Google AI",
+  "private": false,
+  "author": "Smart Reach Team",
+  "license": "MIT",
+  "homepage": "https://github.com/yourusername/smart-reach#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/smart-reach.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/smart-reach/issues"
+  },
+  "keywords": [
+    "email",
+    "outreach",
+    "automation",
+    "ai",
+    "nextjs",
+    "supabase",
+    "gmail",
+    "stripe",
+    "typescript"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,19 +31,32 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@stripe/stripe-js": "^7.3.1",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.50.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "googleapis": "^150.0.1",
+    "lucide-react": "^0.522.0",
+    "next": "15.3.4",
+    "openai": "^5.6.0",
+    "papaparse": "^5.5.3",
+    "pdf-parse": "^1.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "15.3.4"
+    "stripe": "^18.2.1",
+    "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
     "@types/node": "^20",
+    "@types/papaparse": "^5.3.16",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
-    "@eslint/eslintrc": "^3"
+    "typescript": "^5"
   }
 }
