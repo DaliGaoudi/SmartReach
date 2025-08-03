@@ -19,8 +19,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Check user's subscription and usage if AI generation is needed
+    let limitCheck: any = null;
     if (!customMessage && !individualMessages) {
-      const limitCheck = await checkEmailLimit(user.id, contactIds.length);
+      limitCheck = await checkEmailLimit(user.id, contactIds.length);
       
       if (!limitCheck.allowed) {
         return NextResponse.json({ 
@@ -124,10 +125,8 @@ export async function POST(request: NextRequest) {
           emailContent = customMessage;
         } else {
           // Generate AI message if no custom message provided
-          // Increment count before generating
-          if (!isPremium) {
-            usageCount++;
-          }
+          // Check if user is premium (only for AI generation)
+          const isPremium = limitCheck?.usageStats?.isPremium || false;
           
           const aiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
             method: 'POST',
