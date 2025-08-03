@@ -14,28 +14,28 @@ export default function Login() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-zinc-900">
-      <div className="w-full max-w-md p-8 bg-white border border-pink-500 rounded-xl shadow-lg flex flex-col gap-6">
+    <div className="flex items-center justify-center min-h-screen bg-zinc-900 p-4">
+      <div className="w-full max-w-md p-6 sm:p-8 bg-white border border-pink-500 rounded-xl shadow-lg flex flex-col gap-4 sm:gap-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-pink-500 m-0">Log In</h1>
-          <p className="text-zinc-600 m-0">Welcome back to SmartSendr</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-pink-500 m-0">Log In</h1>
+          <p className="text-sm sm:text-base text-zinc-600 m-0 mt-1">Welcome back to SmartSendr</p>
         </div>
         {message?.error && (
-          <div className="bg-red-100 text-red-700 px-4 py-2 rounded text-center text-sm">{message.error}</div>
+          <div className="bg-red-100 text-red-700 px-3 sm:px-4 py-2 rounded text-center text-xs sm:text-sm">{message.error}</div>
         )}
         <form action={googleLogin} className="mb-2">
-          <button type="submit" className="w-full h-10 inline-flex items-center justify-center px-4 text-sm font-medium text-white bg-pink-500 rounded-lg mb-2">
+          <button type="submit" className="w-full h-10 inline-flex items-center justify-center px-3 sm:px-4 text-xs sm:text-sm font-medium text-white bg-pink-500 rounded-lg mb-2">
             Log In with Google
           </button>
         </form>
         <div className="flex items-center my-2">
           <hr className="flex-1 border-t border-pink-500" />
-          <span className="mx-4 text-zinc-600">OR</span>
+          <span className="mx-3 sm:mx-4 text-xs sm:text-sm text-zinc-600">OR</span>
           <hr className="flex-1 border-t border-pink-500" />
         </div>
         <form onSubmit={handleLogin} className="flex flex-col gap-3">
           <div>
-            <label className="block mb-1 text-sm font-medium text-pink-500" htmlFor="email">
+            <label className="block mb-1 text-xs sm:text-sm font-medium text-pink-500" htmlFor="email">
               Email
             </label>
             <input
@@ -43,27 +43,27 @@ export default function Login() {
               name="email"
               type="email"
               placeholder="name@example.com"
-              className="w-full px-3 py-2 border border-pink-500 rounded focus:outline-none"
+              className="w-full px-3 py-2 text-sm sm:text-base border border-pink-500 rounded focus:outline-none"
               required
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm font-medium text-pink-500" htmlFor="password">
+            <label className="block mb-1 text-xs sm:text-sm font-medium text-pink-500" htmlFor="password">
               Password
             </label>
             <input
               id="password"
               name="password"
               type="password"
-              className="w-full px-3 py-2 border border-pink-500 rounded focus:outline-none"
+              className="w-full px-3 py-2 text-sm sm:text-base border border-pink-500 rounded focus:outline-none"
               required
             />
           </div>
-          <button type="submit" className="w-full h-10 text-sm font-medium text-white bg-pink-500 rounded-lg">
+          <button type="submit" className="w-full h-10 text-xs sm:text-sm font-medium text-white bg-pink-500 rounded-lg">
             Log In
           </button>
         </form>
-        <div className="text-center text-sm text-zinc-600">
+        <div className="text-center text-xs sm:text-sm text-zinc-600">
           Don&apos;t have an account?{' '}
           <Link href="/signup" className="font-medium text-yellow-400 underline">
             Sign up

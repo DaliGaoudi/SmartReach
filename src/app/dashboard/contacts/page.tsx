@@ -677,39 +677,41 @@ export default function ContactsListPage() {
   }, []);
 
   return (
-    <div className="max-w-7xl mx-auto py-10 px-4">
+    <div className="max-w-7xl mx-auto py-6 sm:py-10 px-4 sm:px-6 lg:px-8">
       
       {/* Tab Navigation */}
-      <div className="flex border-b border-zinc-200 mb-8">
+      <div className="flex border-b border-zinc-200 mb-6 sm:mb-8 overflow-x-auto">
         <button
           onClick={() => setActiveTab('contacts')}
-          className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${
+          className={`px-4 sm:px-6 py-3 font-medium text-xs sm:text-sm border-b-2 transition-colors whitespace-nowrap ${
             activeTab === 'contacts'
               ? 'border-pink-500 text-pink-600'
               : 'border-transparent text-zinc-500 hover:text-zinc-700'
           }`}
         >
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            Contacts
+            <span className="hidden sm:inline">Contacts</span>
+            <span className="sm:hidden">Contacts</span>
           </div>
         </button>
         <button
           onClick={() => setActiveTab('settings')}
-          className={`px-6 py-3 font-medium text-sm border-b-2 transition-colors ${
+          className={`px-4 sm:px-6 py-3 font-medium text-xs sm:text-sm border-b-2 transition-colors whitespace-nowrap ${
             activeTab === 'settings'
               ? 'border-pink-500 text-pink-600'
               : 'border-transparent text-zinc-500 hover:text-zinc-700'
           }`}
         >
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            Settings
+            <span className="hidden sm:inline">Settings</span>
+            <span className="sm:hidden">Settings</span>
           </div>
         </button>
       </div>
@@ -717,33 +719,44 @@ export default function ContactsListPage() {
       {/* Contacts Tab Content */}
       {activeTab === 'contacts' && (
         <>
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-pink-500">Your Contacts</h1>
-            <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+            <h1 className="text-xl sm:text-2xl font-bold text-pink-500">Your Contacts</h1>
+            <div className="flex flex-wrap gap-2">
               <button 
                 onClick={() => setAddContactModalOpen(true)}
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-blue-500 px-4 text-sm font-medium text-white shadow hover:bg-blue-600 transition-colors"
+                className="inline-flex h-9 sm:h-10 items-center justify-center rounded-lg bg-blue-500 px-3 sm:px-4 text-xs sm:text-sm font-medium text-white shadow hover:bg-blue-600 transition-colors"
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                Add Contact
+                <span className="hidden sm:inline">Add Contact</span>
+                <span className="sm:hidden">Add</span>
               </button>
               {selectedContacts.length > 0 && (
                 <>
                   <button 
                     onClick={handleDeleteSelected}
                     disabled={isDeleting}
-                    className="inline-flex h-10 items-center justify-center rounded-lg bg-red-500 px-4 text-sm font-medium text-white shadow hover:bg-red-600 transition-colors disabled:opacity-50"
+                    className="inline-flex h-9 sm:h-10 items-center justify-center rounded-lg bg-red-500 px-3 sm:px-4 text-xs sm:text-sm font-medium text-white shadow hover:bg-red-600 transition-colors disabled:opacity-50"
                   >
-                    {isDeleting ? 'Deleting...' : `Delete ${selectedContacts.length} contact(s)`}
+                    {isDeleting ? 'Deleting...' : (
+                      <>
+                        <span className="hidden sm:inline">Delete {selectedContacts.length} contact(s)</span>
+                        <span className="sm:hidden">Delete {selectedContacts.length}</span>
+                      </>
+                    )}
                   </button>
                   <button 
                     onClick={handleOpenAndPreview}
                     disabled={isSending}
-                    className="inline-flex h-10 items-center justify-center rounded-lg bg-green-500 px-4 text-sm font-medium text-white shadow hover:bg-green-600 transition-colors disabled:opacity-50"
+                    className="inline-flex h-9 sm:h-10 items-center justify-center rounded-lg bg-green-500 px-3 sm:px-4 text-xs sm:text-sm font-medium text-white shadow hover:bg-green-600 transition-colors disabled:opacity-50"
                   >
-                    {isSending ? 'Sending...' : `Preview Email for ${selectedContacts.length} contact(s)`}
+                    {isSending ? 'Sending...' : (
+                      <>
+                        <span className="hidden sm:inline">Preview Email for {selectedContacts.length} contact(s)</span>
+                        <span className="sm:hidden">Preview {selectedContacts.length}</span>
+                      </>
+                    )}
                   </button>
                 </>
               )}

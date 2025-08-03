@@ -13,15 +13,14 @@ export default function Footer() {
         margin: '0 auto', 
         padding: '0 20px',
         display: 'flex',
-        justifyContent: 'space-between',
+        flexDirection: 'column',
         alignItems: 'center',
-        flexWrap: 'wrap',
         gap: 16
       }}>
-        <div style={{ color: '#a1a1aa', fontSize: 14 }}>
+        <div style={{ color: '#a1a1aa', fontSize: 14, textAlign: 'center' }}>
           © 2024 SmartSendr. All rights reserved.
         </div>
-        <div style={{ display: 'flex', gap: 24, fontSize: 14 }}>
+        <div style={{ display: 'flex', gap: 24, fontSize: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
           <a 
             href="/privacy" 
             style={{ color: '#a1a1aa', textDecoration: 'none' }}

@@ -20,15 +20,16 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-zinc-50">
       <header className="bg-white shadow-sm border-b border-zinc-200">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-pink-500">SmartSendr Dashboard</h1>
-          <div className="flex items-center gap-4">
-            <p className="text-sm text-zinc-600">Signed in as {user.email}</p>
+        <div className="max-w-7xl mx-auto py-3 sm:py-4 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-4">
+          <h1 className="text-lg sm:text-xl font-bold text-pink-500">SmartSendr Dashboard</h1>
+          <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+            <p className="text-zinc-600 hidden sm:block">Signed in as {user.email}</p>
+            <p className="text-zinc-600 sm:hidden">{user.email?.split('@')[0]}...</p>
             <LogoutButton />
           </div>
         </div>
       </header>
-      <main className="py-10">
+      <main className="py-6 sm:py-10 px-4 sm:px-6 lg:px-8">
         {children}
       </main>
     </div>
