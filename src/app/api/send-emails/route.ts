@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { google } from 'googleapis';
+import { checkEmailLimit, incrementEmailUsage } from '@/lib/subscription-limits';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,29 +19,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Check user's subscription and usage if AI generation is needed
-    let isPremium = false;
-    let usageCount = 0;
-
-    // If we have individual messages, we don't need to check limits since they're pre-generated
     if (!customMessage && !individualMessages) {
-      const [
-        { data: subscription, error: subscriptionError },
-        { data: profile, error: profileError }
-      ] = await Promise.all([
-        supabase.from('subscriptions').select('status').in('status', ['trialing', 'active']).single(),
-        supabase.from('profiles').select('email_count').eq('id', user.id).single()
-      ]);
-
-      if (subscriptionError && profileError) {
-        return NextResponse.json({ error: 'Failed to retrieve user data.' }, { status: 500 });
-      }
-
-      isPremium = subscription?.status === 'trialing' || subscription?.status === 'active';
-      usageCount = profile?.email_count || 0;
-
-      if (!isPremium && usageCount >= 25) {
+      const limitCheck = await checkEmailLimit(user.id, contactIds.length);
+      
+      if (!limitCheck.allowed) {
         return NextResponse.json({ 
-          error: 'You have reached your limit of 25 free emails. Please upgrade to a premium plan to continue.'
+          error: limitCheck.error,
+          usageStats: limitCheck.usageStats
         }, { status: 402 }); // Payment Required
       }
     }
@@ -216,15 +201,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Update email count for free users if it was changed
-    if (!isPremium && !customMessage && successfulContactIds.length > 0) {
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ email_count: usageCount })
-        .eq('id', user.id);
-      
-      if (updateError) {
-        console.error('Failed to update email count:', updateError);
+    // Update email usage for free users
+    if (!customMessage && successfulContactIds.length > 0) {
+      try {
+        await incrementEmailUsage(user.id, successfulContactIds.length);
+      } catch (error) {
+        console.error('Failed to update email usage:', error);
+        // Don't fail the entire request if usage tracking fails
       }
     }
 

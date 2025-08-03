@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import pdf from 'pdf-parse';
+import { checkEmailLimit } from '@/lib/subscription-limits';
 
 // Initialize Google AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
@@ -28,26 +29,14 @@ export async function POST(request: Request) {
   }
   
   // Check user's subscription and usage
-  const [
-    { data: subscription, error: subscriptionError },
-    { data: profile, error: profileError }
-  ] = await Promise.all([
-    supabase.from('subscriptions').select('status').in('status', ['trialing', 'active']).single(),
-    supabase.from('profiles').select('email_count, resume_path, full_name').eq('id', session.user.id).single()
-  ]);
-
-  if (subscriptionError && profileError) {
-    return NextResponse.json({ error: 'Failed to retrieve user data.' }, { status: 500 });
-  }
-
-  const isPremium = subscription?.status === 'trialing' || subscription?.status === 'active';
-  const usageCount = profile?.email_count || 0;
-
-  if (!isPremium && usageCount >= 25) {
+  const limitCheck = await checkEmailLimit(session.user.id, 1);
+  
+  if (!limitCheck.allowed) {
     return NextResponse.json({ 
-      error: 'You have reached your limit of 25 free emails. Please upgrade to a premium plan to continue.',
+      error: limitCheck.error,
       preview: 'Upgrade to send more emails.',
-      upgradeRequired: true
+      upgradeRequired: true,
+      usageStats: limitCheck.usageStats
     }, { status: 402 }); // Payment Required
   }
 

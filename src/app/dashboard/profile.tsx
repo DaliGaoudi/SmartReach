@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { stripeRedirect } from '@/app/pricing/actions';
+import { getUserUsageStats, formatUsageMessage } from '@/lib/subscription-limits';
 
 type ResumeFile = {
   name: string;
@@ -21,6 +22,7 @@ export default function ProfileManager({ session }: { session: any }) {
   const [uploading, setUploading] = useState(false);
   const [profile, setProfile] = useState<{ full_name: string | null, resume_path: string | null } | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
+  const [usageStats, setUsageStats] = useState<any>(null);
   const [resumeFiles, setResumeFiles] = useState<ResumeFile[]>([]);
   const [loadingResumes, setLoadingResumes] = useState(true);
   const [gmailStatus, setGmailStatus] = useState<{ connected: boolean; loading: boolean }>({ connected: false, loading: true });
@@ -62,20 +64,31 @@ export default function ProfileManager({ session }: { session: any }) {
   }, [session?.user?.id, supabase]);
 
   useEffect(() => {
-    const fetchSubscription = async () => {
+    const fetchSubscriptionAndUsage = async () => {
       if (!session?.user?.id) return;
 
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .single();
+      try {
+        const [subscriptionData, usageData] = await Promise.all([
+          supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single(),
+          getUserUsageStats(session.user.id)
+        ]);
 
-      if (data && !error) {
-        setSubscription(data);
+        if (subscriptionData.data && !subscriptionData.error) {
+          setSubscription(subscriptionData.data);
+        }
+        
+        if (usageData) {
+          setUsageStats(usageData);
+        }
+      } catch (error) {
+        console.error('Error fetching subscription and usage:', error);
       }
     };
-    fetchSubscription();
+    fetchSubscriptionAndUsage();
   }, [session?.user?.id, supabase]);
 
   useEffect(() => {
@@ -300,6 +313,85 @@ export default function ProfileManager({ session }: { session: any }) {
             </div>
           </div>
         </div>
+
+        {/* Usage Statistics Card */}
+        {usageStats && (
+          <div className="bg-black border border-zinc-700/50 rounded-xl shadow-lg overflow-hidden">
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-white">Usage Statistics</h2>
+              <p className="mt-1 text-zinc-300">Track your email usage and plan limits.</p>
+            </div>
+            <div className="border-t border-zinc-700/50 p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="bg-zinc-800/50 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-zinc-300">Email Usage</h3>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      usageStats.isPremium 
+                        ? 'bg-green-500/20 text-green-400' 
+                        : 'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      {usageStats.isPremium ? 'Premium' : 'Free'}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-zinc-400">Used this month:</span>
+                      <span className="text-white font-medium">{usageStats.emailsUsed}</span>
+                    </div>
+                    {!usageStats.isPremium && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-zinc-400">Remaining:</span>
+                        <span className="text-white font-medium">{usageStats.emailsRemaining}</span>
+                      </div>
+                    )}
+                    <div className="text-xs text-zinc-500">
+                      {formatUsageMessage(usageStats)}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-zinc-800/50 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-zinc-300">Plan Features</h3>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                      <span className="text-zinc-300">AI Email Generation</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                      <span className="text-zinc-300">Direct Gmail Sending</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                      <span className="text-zinc-300">Contact Management</span>
+                    </div>
+                    {usageStats.isPremium && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-pink-400 rounded-full"></div>
+                        <span className="text-pink-400 font-medium">Unlimited Emails</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {!usageStats.isPremium && usageStats.emailsRemaining <= 5 && (
+                <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                    <span className="text-yellow-400 text-sm font-medium">Low Email Credits</span>
+                  </div>
+                  <p className="text-yellow-300 text-xs mt-1">
+                    You're running low on email credits. Consider upgrading to premium for unlimited emails.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Bottom Section: Integration & Personalization */}
         <div className="bg-black border border-zinc-700/50 rounded-xl shadow-lg overflow-hidden">

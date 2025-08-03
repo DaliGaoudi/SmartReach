@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Papa from 'papaparse';
 import { stripeRedirect } from '@/app/pricing/actions';
+import { getUserUsageStats, formatUsageMessage, checkEmailLimit } from '@/lib/subscription-limits';
 
 type Contact = {
   id: string;
@@ -67,6 +68,7 @@ export default function ContactsListPage() {
   // Settings state
   const [profile, setProfile] = useState<{ full_name: string | null, resume_path: string | null } | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
+  const [usageStats, setUsageStats] = useState<any>(null);
   const [resumeFiles, setResumeFiles] = useState<any[]>([]);
   const [loadingResumes, setLoadingResumes] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -639,37 +641,46 @@ export default function ContactsListPage() {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session) return;
 
-      // Load profile
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('full_name, resume_path')
-        .eq('id', session.user.id)
-        .single();
-      
-      if (profileData) {
-        setProfile(profileData);
-      }
-
-      // Load subscription
-      const { data: subscriptionData } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .single();
-
-      if (subscriptionData) {
-        setSubscription(subscriptionData);
-      }
-
-      // Load resume files
       try {
-        setLoadingResumes(true);
-        const { data: resumeData } = await supabase.storage.from('resumes').list(`${session.user.id}/`);
-        setResumeFiles(resumeData || []);
+        // Load profile, subscription, and usage stats in parallel
+        const [profileData, subscriptionData, usageData] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('full_name, resume_path')
+            .eq('id', session.user.id)
+            .single(),
+          supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single(),
+          getUserUsageStats(session.user.id)
+        ]);
+
+        if (profileData.data) {
+          setProfile(profileData.data);
+        }
+
+        if (subscriptionData.data) {
+          setSubscription(subscriptionData.data);
+        }
+
+        if (usageData) {
+          setUsageStats(usageData);
+        }
+
+        // Load resume files
+        try {
+          setLoadingResumes(true);
+          const { data: resumeData } = await supabase.storage.from('resumes').list(`${session.user.id}/`);
+          setResumeFiles(resumeData || []);
+        } catch (error) {
+          console.error('Error loading resumes:', error);
+        } finally {
+          setLoadingResumes(false);
+        }
       } catch (error) {
-        console.error('Error loading resumes:', error);
-      } finally {
-        setLoadingResumes(false);
+        console.error('Error loading profile data:', error);
       }
     };
 
@@ -1367,6 +1378,85 @@ export default function ContactsListPage() {
               </div>
             </div>
           </div>
+
+          {/* Usage Statistics Card */}
+          {usageStats && (
+            <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
+              <div className="p-6">
+                <h2 className="text-2xl font-bold text-zinc-800">Usage Statistics</h2>
+                <p className="mt-1 text-zinc-600">Track your email usage and plan limits.</p>
+              </div>
+              <div className="border-t border-zinc-200 p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="bg-zinc-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-medium text-zinc-700">Email Usage</h3>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        usageStats.isPremium 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {usageStats.isPremium ? 'Premium' : 'Free'}
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-zinc-600">Used this month:</span>
+                        <span className="text-zinc-800 font-medium">{usageStats.emailsUsed}</span>
+                      </div>
+                      {!usageStats.isPremium && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-zinc-600">Remaining:</span>
+                          <span className="text-zinc-800 font-medium">{usageStats.emailsRemaining}</span>
+                        </div>
+                      )}
+                      <div className="text-xs text-zinc-500">
+                        {formatUsageMessage(usageStats)}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-zinc-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-medium text-zinc-700">Plan Features</h3>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-zinc-700">AI Email Generation</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-zinc-700">Direct Gmail Sending</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-zinc-700">Contact Management</span>
+                      </div>
+                      {usageStats.isPremium && (
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
+                          <span className="text-pink-600 font-medium">Unlimited Emails</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                {!usageStats.isPremium && usageStats.emailsRemaining <= 5 && (
+                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                      <span className="text-yellow-700 text-sm font-medium">Low Email Credits</span>
+                    </div>
+                    <p className="text-yellow-600 text-xs mt-1">
+                      You're running low on email credits. Consider upgrading to premium for unlimited emails.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Bottom Section: Integration & Personalization */}
           <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
