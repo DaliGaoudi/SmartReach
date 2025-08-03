@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/reset-usage",
+      "schedule": "0 0 1 * *"
+    }
+  ]
+} 
