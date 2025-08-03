@@ -41,6 +41,17 @@ export async function POST(request: Request) {
   }
 
   // 1. Fetch user's profile to get resume path (optional)
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('resume_path, email_count')
+    .eq('id', session.user.id)
+    .single();
+
+  if (profileError) {
+    console.error('Error fetching user profile:', profileError);
+    // Continue without profile data
+  }
+
   // 2. Download and parse resume from Supabase Storage (if available)
   let resumeText = '';
   let hasResume = false;
@@ -178,10 +189,11 @@ export async function POST(request: Request) {
     const messageBody = response.text();
 
     // Increment email count for free users
-    if (!isPremium) {
+    if (!limitCheck.usageStats?.isPremium) {
+      const currentEmailCount = profile?.email_count || 0;
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ email_count: usageCount + 1 })
+        .update({ email_count: currentEmailCount + 1 })
         .eq('id', session.user.id);
       
       if (updateError) {
