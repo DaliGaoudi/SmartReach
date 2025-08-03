@@ -64,7 +64,7 @@ export default function Login() {
           </button>
         </form>
         <div className="text-center text-sm text-zinc-600">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/signup" className="font-medium text-yellow-400 underline">
             Sign up
           </Link>

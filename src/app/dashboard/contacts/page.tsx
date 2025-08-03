@@ -353,13 +353,7 @@ export default function ContactsListPage() {
     }
   };
 
-  // Update global message and apply to all previews
-  const updateGlobalMessage = (newMessage: string) => {
-    setEmailPreviews(prev => prev.map(preview => ({
-      ...preview,
-      editedContent: newMessage
-    })));
-  };
+
 
   // This function sends all emails after confirmation
   const handleConfirmAndSend = async () => {
@@ -752,7 +746,7 @@ export default function ContactsListPage() {
             
             {addContactMode === 'choice' && (
               <div className="space-y-4">
-                <p className="text-sm text-zinc-600 mb-4">Choose how you'd like to add contacts:</p>
+                <p className="text-sm text-zinc-600 mb-4">Choose how you&apos;d like to add contacts:</p>
                 
                 <button
                   onClick={() => setAddContactMode('manual')}

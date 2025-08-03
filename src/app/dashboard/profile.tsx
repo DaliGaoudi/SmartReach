@@ -14,7 +14,7 @@ type ResumeFile = {
   metadata: any;
 };
 
-export default function ProfileManager({ session }) {
+export default function ProfileManager({ session }: { session: any }) {
   const supabase = createClient();
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
@@ -29,7 +29,7 @@ export default function ProfileManager({ session }) {
     const getOrCreateProfile = async () => {
       if (!session?.user?.id) return;
 
-      let { data, error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('full_name, resume_path')
         .eq('id', session.user.id)

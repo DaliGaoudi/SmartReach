@@ -59,7 +59,8 @@ export interface Subscription {
     | 'incomplete'
     | 'incomplete_expired'
     | 'past_due'
-    | 'unpaid';
+    | 'unpaid'
+    | 'paused';
   metadata?: any;
   price_id?: string;
   quantity?: number;

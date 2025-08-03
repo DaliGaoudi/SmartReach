@@ -67,7 +67,7 @@ export default function TermsOfService() {
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ color: '#38bdf8', marginBottom: 16 }}>Limitation of Liability</h2>
         <p style={{ marginBottom: 16 }}>
-          SmartSendr is provided "as is" without warranties of any kind. We are not liable for any damages arising from your use of the service.
+          SmartSendr is provided &quot;as is&quot; without warranties of any kind. We are not liable for any damages arising from your use of the service.
         </p>
       </section>
 

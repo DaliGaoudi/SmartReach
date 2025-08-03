@@ -41,7 +41,6 @@ export const createCheckoutSession = async (price: Price) => {
         mode: 'subscription',
         allow_promotion_codes: true,
         subscription_data: {
-            trial_from_plan: true,
             metadata: {
                 userId: user.id,
             }

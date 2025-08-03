@@ -14,14 +14,14 @@ interface Contact {
 
 export default function UploadContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [fileName, setFileName] = useState('');
+
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setFileName(file.name);
+
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
@@ -63,7 +63,7 @@ export default function UploadContactsPage() {
       } else {
         setMessage('Contacts uploaded successfully!');
         setContacts([]);
-        setFileName('');
+
       }
     } catch (err: any) {
       setMessage('Unexpected error: ' + err.message);

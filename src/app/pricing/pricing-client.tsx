@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ProductWithPrice, Subscription } from '@/types';
+import { ProductWithPrice, Subscription, Price } from '@/types';
 import { User } from '@supabase/supabase-js';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -37,7 +37,7 @@ export default function Pricing({
 
     const backUrl = subscription ? '/dashboard' : '/';
 
-    const handleCheckout = async (price: ProductWithPrice['prices'][0]) => {
+    const handleCheckout = async (price: Price) => {
         setPriceIdLoading(price.id);
         if (!user) {
             setPriceIdLoading(undefined);
@@ -208,7 +208,7 @@ export default function Pricing({
                                 <CardFooter>
                                     <Button
                                         className="w-full"
-                                        disabled={priceIdLoading}
+                                        disabled={!!priceIdLoading}
                                         onClick={() => handleCheckout(price)}
                                     >
                                         {subscription ? 'Manage' : 'Subscribe'}

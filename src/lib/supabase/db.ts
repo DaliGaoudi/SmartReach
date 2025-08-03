@@ -139,7 +139,21 @@ export const copyBillingDetailsToCustomer = async (
     //Todo: copy billing details to customer
     const customer = payment_method.customer as string;
     const { name, phone, address } = payment_method.billing_details;
-    await stripe.customers.update(customer, { name, phone, address });
+    await stripe.customers.update(customer, {
+      name: name || undefined,
+      phone: phone || undefined,
+      address: address
+        ? {
+            ...address,
+            city: address.city || undefined,
+            country: address.country || undefined,
+            line1: address.line1 || undefined,
+            line2: address.line2 || undefined,
+            postal_code: address.postal_code || undefined,
+            state: address.state || undefined,
+          }
+        : undefined,
+    });
     const supabase = await createClient();
     const { error } = await supabase
         .from('users')
@@ -169,7 +183,7 @@ export const manageSubscriptionStatusChange = async (
 
     const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
         expand: ['default_payment_method']
-    });
+    }) as Stripe.Subscription;
     // Upsert the latest status of the subscription object.
     const subscriptionData: Subscription = {
         id: subscription.id,
@@ -178,29 +192,30 @@ export const manageSubscriptionStatusChange = async (
         status: subscription.status,
         price_id: subscription.items.data[0].price.id,
         //TODO check quantity on subscription
-        quantity: subscription.quantity,
+        quantity: subscription.items.data[0].quantity,
         cancel_at_period_end: subscription.cancel_at_period_end,
         cancel_at: subscription.cancel_at
             ? toDateTime(subscription.cancel_at).toISOString()
-            : null,
+            : undefined,
         canceled_at: subscription.canceled_at
             ? toDateTime(subscription.canceled_at).toISOString()
-            : null,
+            : undefined,
         current_period_start: toDateTime(
-            subscription.current_period_start
+            (subscription as any).current_period_start
         ).toISOString(),
         current_period_end: toDateTime(
-            subscription.current_period_end
+            (subscription as any).current_period_end
         ).toISOString(),
         ended_at: subscription.ended_at
             ? toDateTime(subscription.ended_at).toISOString()
-            : null,
+            : undefined,
         trial_start: subscription.trial_start
             ? toDateTime(subscription.trial_start).toISOString()
-            : null,
+            : undefined,
         trial_end: subscription.trial_end
             ? toDateTime(subscription.trial_end).toISOString()
-            : null
+            : undefined,
+        created: toDateTime(subscription.created).toISOString(),
     };
 
     const { error } = await supabase
@@ -215,7 +230,6 @@ export const manageSubscriptionStatusChange = async (
     // NOTE: This is a costly operation for every subscription created.
     // If you have many customers, you might want to remove this.
     if (createAction && subscription.default_payment_method && uuid)
-        //@ts-ignore
         await copyBillingDetailsToCustomer(
             uuid,
             subscription.default_payment_method as Stripe.PaymentMethod
