@@ -4,7 +4,8 @@ import { useEffect, useState, useTransition } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Papa from 'papaparse';
 import { stripeRedirect } from '@/app/pricing/actions';
-import { getUserUsageStats, formatUsageMessage, checkEmailLimit } from '@/lib/subscription-limits';
+import { formatUsageMessage } from '@/lib/subscription-limits-client';
+import { getUsageStats } from '../actions';
 
 type Contact = {
   id: string;
@@ -654,7 +655,7 @@ export default function ContactsListPage() {
             .select('*')
             .eq('user_id', session.user.id)
             .single(),
-          getUserUsageStats(session.user.id)
+          getUsageStats()
         ]);
 
         if (profileData.data) {

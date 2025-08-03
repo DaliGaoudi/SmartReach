@@ -4,7 +4,8 @@ import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { stripeRedirect } from '@/app/pricing/actions';
-import { getUserUsageStats, formatUsageMessage } from '@/lib/subscription-limits';
+import { formatUsageMessage } from '@/lib/subscription-limits-client';
+import { getUsageStats } from './actions';
 
 type ResumeFile = {
   name: string;
@@ -74,7 +75,7 @@ export default function ProfileManager({ session }: { session: any }) {
             .select('*')
             .eq('user_id', session.user.id)
             .single(),
-          getUserUsageStats(session.user.id)
+          getUsageStats()
         ]);
 
         if (subscriptionData.data && !subscriptionData.error) {
