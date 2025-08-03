@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Papa from 'papaparse';
+import { stripeRedirect } from '@/app/pricing/actions';
 
 type Contact = {
   id: string;
@@ -64,6 +65,7 @@ export default function ContactsListPage() {
   
   // Settings state
   const [profile, setProfile] = useState<{ full_name: string | null, resume_path: string | null } | null>(null);
+  const [subscription, setSubscription] = useState<any>(null);
   const [resumeFiles, setResumeFiles] = useState<any[]>([]);
   const [loadingResumes, setLoadingResumes] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -169,6 +171,16 @@ export default function ContactsListPage() {
   const fetchContacts = async () => {
     const supabase = createClient();
     
+    // Debug: Log environment variables (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Environment check:', {
+        hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        urlPrefix: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 20),
+        anonKeyPrefix: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.substring(0, 20)
+      });
+    }
+    
     // First, try to get the session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
@@ -197,6 +209,7 @@ export default function ContactsListPage() {
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (error) {
+        console.error('Database error:', error);
         setError('Error fetching contacts: ' + error.message);
       } else {
         setContacts(data as Contact[]);
@@ -212,6 +225,7 @@ export default function ContactsListPage() {
       .eq('user_id', session.user.id)
       .order('created_at', { ascending: false });
     if (error) {
+      console.error('Database error:', error);
       setError('Error fetching contacts: ' + error.message);
     } else {
       setContacts(data as Contact[]);
@@ -604,6 +618,15 @@ export default function ContactsListPage() {
     setNameChanged(true);
   };
 
+  const handleManageBilling = async () => {
+    try {
+      const { url } = await stripeRedirect('/dashboard/contacts');
+      if (url) window.location.href = url;
+    } catch (error) {
+      alert(`Error redirecting to billing: ${(error as Error).message}`);
+    }
+  };
+
   const getResumeFileName = (path: string) => path.split('/').pop();
 
   // Add useEffect for loading profile and resume data
@@ -622,6 +645,17 @@ export default function ContactsListPage() {
       
       if (profileData) {
         setProfile(profileData);
+      }
+
+      // Load subscription
+      const { data: subscriptionData } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (subscriptionData) {
+        setSubscription(subscriptionData);
       }
 
       // Load resume files
@@ -1300,15 +1334,15 @@ export default function ContactsListPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-zinc-600">Current Plan</p>
-                    <p className="text-zinc-800 font-medium">Free Plan</p>
+                    <p className="text-zinc-800 font-medium">{subscription ? 'Pro Plan' : 'Free Plan'}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-zinc-600">Status</p>
-                    <p className="text-green-600 font-medium">Active</p>
+                    <p className="text-green-600 font-medium">{subscription ? 'Active' : 'Free'}</p>
                   </div>
                 </div>
-                <button className="w-full inline-flex items-center justify-center h-10 px-6 rounded-xl bg-pink-500 text-white font-semibold text-base shadow-md hover:bg-pink-600 transition-colors duration-200">
-                  Manage Billing
+                <button onClick={handleManageBilling} className="w-full inline-flex items-center justify-center h-10 px-6 rounded-xl bg-pink-500 text-white font-semibold text-base shadow-md hover:bg-pink-600 transition-colors duration-200">
+                  {subscription ? 'Manage Billing' : 'Upgrade Plan'}
                 </button>
               </div>
             </div>

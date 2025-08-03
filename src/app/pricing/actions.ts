@@ -67,6 +67,7 @@ export const stripeRedirect = async (path: string) => {
         const { data, error } = await supabase.from('subscriptions').select('*').eq('user_id', user.id).single();
 
         if (data && !error) {
+            // User has a subscription - redirect to Stripe billing portal
             const stripeSession = await stripe.billingPortal.sessions.create({
                 customer: (await createOrRetrieveCustomer({
                     uuid: user.id || '',
@@ -80,8 +81,12 @@ export const stripeRedirect = async (path: string) => {
             }
 
             return { url: stripeSession.url };
+        } else {
+            // User doesn't have a subscription - redirect to pricing page
+            return { url: `${getURL()}/pricing` };
         }
     }
 
-    return { url: `${getURL()}${path}` };
+    // No user - redirect to pricing page
+    return { url: `${getURL()}/pricing` };
 } 

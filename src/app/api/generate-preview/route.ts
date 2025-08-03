@@ -90,85 +90,97 @@ export async function POST(request: Request) {
     if (hasResume && contact.company) {
       // Enhanced prompt with company research and resume-based personalization
       prompt = `
-        You are an expert career assistant writing a personalized cold email. Your task is to:
+        You are an expert career assistant helping a job seeker write a personalized cold email TO a contact at a company.
 
-        1. RESEARCH THE COMPANY: First, analyze what ${contact.company} does based on their name and any context you can infer. Consider:
-           - Industry and sector
-           - Company size and stage
-           - Likely business model
-           - Recent trends in their industry
-
-        2. ANALYZE THE RESUME: Review this resume to understand the sender's background:
+        THE JOB SEEKER'S RESUME:
         ---
         ${resumeText}
         ---
 
-        3. CREATE A TAILORED EMAIL: Write a compelling cold email that:
-           - Addresses ${contact.name} personally
-           - Shows understanding of ${contact.company}'s business and industry
-           - Connects the sender's relevant skills/experience to what ${contact.company} likely needs
-           - Mentions specific aspects of the company that align with the sender's background
+        THE CONTACT: ${contact.name} at ${contact.company}
+
+        TASK: Write a cold email FROM the job seeker TO ${contact.name} at ${contact.company}.
+
+        INSTRUCTIONS:
+        1. Research what ${contact.company} likely does based on their name
+        2. Write a personalized email that:
+           - Is written FROM the job seeker TO ${contact.name}
+           - Shows understanding of ${contact.company}'s business
+           - Connects the job seeker's skills/experience to what ${contact.company} likely needs
            - Is concise (under 150 words) but impactful
            - Has a clear, professional call to action
-           - Avoids generic templates - make it feel genuinely researched and personalized
+           - Avoids generic templates
 
-        Focus on creating a connection between the sender's background and ${contact.company}'s likely needs. Make the email feel like it was written specifically for this person and company combination.
+        IMPORTANT: The email should be written FROM the job seeker TO ${contact.name}, not from a recruiter.
 
         Return only the email body text, no subject line or formatting.
       `;
     } else if (hasResume) {
       // Resume available but no company info
       prompt = `
-        You are an expert career assistant writing a cold email on behalf of a user.
-        The user's resume is:
+        You are an expert career assistant helping a job seeker write a cold email.
+
+        THE JOB SEEKER'S RESUME:
         ---
         ${resumeText}
         ---
-        The email is for: ${contact.name}.
-        
-        Based on the user's resume, write a short, professional, and enthusiastic cold email. The goal is to build a network connection and inquire about potential opportunities.
-        - Start with a greeting to ${contact.name}.
-        - Briefly introduce the user and highlight 1-2 key skills or experiences from their resume.
-        - Keep the email concise (under 120 words).
-        - End with a call to action, like asking for a brief chat.
-        - Do not include a subject line. Just provide the raw email body text.
+
+        THE CONTACT: ${contact.name}
+
+        TASK: Write a cold email FROM the job seeker TO ${contact.name}.
+
+        INSTRUCTIONS:
+        - Write FROM the job seeker's perspective TO ${contact.name}
+        - Briefly introduce the job seeker and highlight 1-2 key skills from their resume
+        - Keep the email concise (under 120 words)
+        - End with a call to action, like asking for a brief chat
+        - Do not include a subject line
+
+        IMPORTANT: The email should be written FROM the job seeker TO ${contact.name}, not from a recruiter.
+
+        Return only the email body text.
       `;
     } else if (contact.company) {
       // Company info available but no resume
       prompt = `
-        You are an expert career assistant writing a cold email. Your task is to:
+        You are an expert career assistant helping a job seeker write a cold email.
 
-        1. RESEARCH THE COMPANY: Analyze what ${contact.company} does based on their name and any context you can infer. Consider:
-           - Industry and sector
-           - Company size and stage
-           - Likely business model
-           - Recent trends in their industry
+        THE CONTACT: ${contact.name} at ${contact.company}
 
-        2. CREATE A TAILORED EMAIL: Write a compelling cold email that:
-           - Addresses ${contact.name} personally
-           - Shows understanding of ${contact.company}'s business and industry
-           - Expresses genuine interest in the company and its work
-           - Mentions specific aspects of the company that are compelling
+        TASK: Write a cold email FROM the job seeker TO ${contact.name} at ${contact.company}.
+
+        INSTRUCTIONS:
+        1. Research what ${contact.company} likely does based on their name
+        2. Write a personalized email that:
+           - Is written FROM the job seeker TO ${contact.name}
+           - Shows understanding of ${contact.company}'s business
+           - Expresses genuine interest in the company
            - Is concise (under 150 words) but impactful
            - Has a clear, professional call to action
-           - Avoids generic templates - make it feel genuinely researched
 
-        The goal is to build a network connection and inquire about potential opportunities.
+        IMPORTANT: The email should be written FROM the job seeker TO ${contact.name}, not from a recruiter.
+
         Return only the email body text, no subject line or formatting.
       `;
     } else {
       // Generic cold email without resume data or company info
       prompt = `
-        You are an expert career assistant writing a cold email on behalf of a user.
-        The email is for: ${contact.name}.
-        
-        Write a short, professional, and enthusiastic cold email. The goal is to build a network connection and inquire about potential opportunities.
-        - Start with a greeting to ${contact.name}.
-        - Briefly introduce the sender as a professional looking to connect.
-        - Keep the email concise (under 120 words).
-        - End with a call to action, like asking for a brief chat or coffee.
-        - Do not include a subject line. Just provide the raw email body text.
-        - Keep it generic but professional since no specific background information is available.
+        You are an expert career assistant helping a job seeker write a cold email.
+
+        THE CONTACT: ${contact.name}
+
+        TASK: Write a cold email FROM the job seeker TO ${contact.name}.
+
+        INSTRUCTIONS:
+        - Write FROM the job seeker's perspective TO ${contact.name}
+        - Briefly introduce the job seeker as a professional looking to connect
+        - Keep the email concise (under 120 words)
+        - End with a call to action, like asking for a brief chat or coffee
+        - Do not include a subject line
+
+        IMPORTANT: The email should be written FROM the job seeker TO ${contact.name}, not from a recruiter.
+
+        Return only the email body text.
       `;
     }
     

@@ -19,6 +19,7 @@ export default function ProfileManager({ session }: { session: any }) {
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
   const [profile, setProfile] = useState<{ full_name: string | null, resume_path: string | null } | null>(null);
+  const [subscription, setSubscription] = useState<any>(null);
   const [resumeFiles, setResumeFiles] = useState<ResumeFile[]>([]);
   const [loadingResumes, setLoadingResumes] = useState(true);
   const [gmailStatus, setGmailStatus] = useState<{ connected: boolean; loading: boolean }>({ connected: false, loading: true });
@@ -57,6 +58,23 @@ export default function ProfileManager({ session }: { session: any }) {
       }
     };
     getOrCreateProfile();
+  }, [session?.user?.id, supabase]);
+
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      if (!session?.user?.id) return;
+
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (data && !error) {
+        setSubscription(data);
+      }
+    };
+    fetchSubscription();
   }, [session?.user?.id, supabase]);
 
   useEffect(() => {
@@ -262,15 +280,15 @@ export default function ProfileManager({ session }: { session: any }) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-zinc-300">Current Plan</p>
-                  <p className="text-white font-medium">Free Plan</p>
+                  <p className="text-white font-medium">{subscription ? 'Pro Plan' : 'Free Plan'}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-zinc-300">Status</p>
-                  <p className="text-green-400 font-medium">Active</p>
+                  <p className="text-green-400 font-medium">{subscription ? 'Active' : 'Free'}</p>
                 </div>
               </div>
               <button onClick={handleManageBilling} className="w-full inline-flex items-center justify-center h-10 px-6 rounded-xl bg-pink-500 text-zinc-50 font-semibold text-base shadow-md hover:bg-pink-600 transition-colors duration-200">
-                Manage Billing
+                {subscription ? 'Manage Billing' : 'Upgrade Plan'}
               </button>
             </div>
           </div>
