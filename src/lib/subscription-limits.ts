@@ -126,11 +126,25 @@ export async function incrementEmailUsage(userId: string, count: number = 1): Pr
     return; // Premium users don't need usage tracking
   }
 
+  // First get the current email count
+  const { data: profile, error: fetchError } = await supabase
+    .from('profiles')
+    .select('email_count')
+    .eq('id', userId)
+    .single();
+
+  if (fetchError) {
+    console.error('Error fetching current email count:', fetchError);
+    throw fetchError;
+  }
+
+  const currentCount = profile?.email_count || 0;
+  const newCount = currentCount + count;
+
+  // Update with the new count
   const { error } = await supabase
     .from('profiles')
-    .update({ 
-      email_count: supabase.sql`email_count + ${count}` 
-    })
+    .update({ email_count: newCount })
     .eq('id', userId);
 
   if (error) {
