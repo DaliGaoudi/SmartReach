@@ -96,9 +96,9 @@ export default function ContactsListPage() {
     setIsDeleting(true);
     try {
       const supabase = createClient();
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (userError || !user) {
+      if (sessionError || !session) {
         throw new Error('Could not get current user. Please log in again.');
       }
 
@@ -106,7 +106,7 @@ export default function ContactsListPage() {
         .from('contacts')
         .delete()
         .in('id', selectedContacts)
-        .eq('user_id', user.id);
+        .eq('user_id', session.user.id);
 
       if (deleteError) {
         throw new Error(`Error deleting contacts: ${deleteError.message}`);
@@ -128,74 +128,88 @@ export default function ContactsListPage() {
 
   const handleAddContact = async (event: React.FormEvent) => {
     event.preventDefault();
-    
-    if (!newContact.name.trim() || !newContact.email.trim()) {
-      alert('Name and email are required.');
-      return;
-    }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newContact.email)) {
-      alert('Please enter a valid email address.');
+    if (!newContact.name || !newContact.email) {
+      setError('Name and email are required.');
       return;
     }
 
     setIsAddingContact(true);
+    setError(null);
     try {
       const supabase = createClient();
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        throw new Error('Could not get current user. Please log in again.');
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        setError('Could not get current user. Please log in again.');
+        setIsAddingContact(false);
+        return;
       }
 
-      const { data, error } = await supabase
-        .from('contacts')
-        .insert({
-          name: newContact.name.trim(),
-          email: newContact.email.trim().toLowerCase(),
-          company: newContact.company.trim() || null,
-          user_id: user.id
-        })
-        .select()
-        .single();
+      const { error } = await supabase.from('contacts').insert({
+        name: newContact.name,
+        email: newContact.email,
+        company: newContact.company || null,
+        user_id: session.user.id
+      });
 
       if (error) {
-        throw new Error(`Error adding contact: ${error.message}`);
+        setError('Error adding contact: ' + error.message);
+      } else {
+        setNewContact({ name: '', email: '', company: '' });
+        setAddContactModalOpen(false);
+        setAddContactMode('choice');
+        await fetchContacts();
       }
-
-      // Add new contact to local state
-      setContacts(prev => [data as Contact, ...prev]);
-      
-      // Reset form and close modal
-      setNewContact({ name: '', email: '', company: '' });
-      setAddContactModalOpen(false);
-      setAddContactMode('choice');
-      setSendStatus('Contact added successfully!');
-      
-      // Clear status after 3 seconds
-      setTimeout(() => setSendStatus(null), 3000);
-    } catch (error: any) {
-      setSendStatus(`Error: ${error.message}`);
-    } finally {
-      setIsAddingContact(false);
+    } catch (err: any) {
+      setError('Unexpected error: ' + err.message);
     }
+    setIsAddingContact(false);
   };
 
   // CSV upload handling functions
   const fetchContacts = async () => {
     const supabase = createClient();
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
+    
+    // First, try to get the session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error('Session error:', sessionError);
       setError('Could not get current user. Please log in again.');
       setLoading(false);
       return;
     }
+
+    // If no session, try to get user (for backward compatibility)
+    if (!session) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        setError('Could not get current user. Please log in again.');
+        setLoading(false);
+        return;
+      }
+      
+      // Use user.id if session is not available
+      const userId = user.id;
+      
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('id, name, email, company, created_at, sent_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (error) {
+        setError('Error fetching contacts: ' + error.message);
+      } else {
+        setContacts(data as Contact[]);
+      }
+      setLoading(false);
+      return;
+    }
+
+    // Use session user
     const { data, error } = await supabase
       .from('contacts')
       .select('id, name, email, company, created_at, sent_at')
-      .eq('user_id', user.id)
+      .eq('user_id', session.user.id)
       .order('created_at', { ascending: false });
     if (error) {
       setError('Error fetching contacts: ' + error.message);
@@ -238,8 +252,8 @@ export default function ContactsListPage() {
     try {
       const supabase = createClient();
       // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
         setCsvMessage('Could not get current user. Please log in again.');
         setCsvLoading(false);
         return;
@@ -247,7 +261,7 @@ export default function ContactsListPage() {
 
       // Insert contacts with user_id
       const { error } = await supabase.from('contacts').insert(
-        csvContacts.map(c => ({ ...c, user_id: user.id }))
+        csvContacts.map(c => ({ ...c, user_id: session.user.id }))
       );
       if (error) {
         console.error('Supabase insert error:', error);
@@ -404,20 +418,26 @@ export default function ContactsListPage() {
   };
 
   useEffect(() => {
-    fetchContacts();
+    const loadContacts = async () => {
+      // Add a small delay to allow session to sync after OAuth redirect
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await fetchContacts();
+    };
+    
+    loadContacts();
   }, []);
 
   useEffect(() => {
     const checkGmailStatus = async () => {
       const supabase = createClient();
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) return;
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) return;
 
       try {
         const { data: tokens, error: tokenError } = await supabase
           .from('user_tokens')
           .select('access_token, refresh_token, expires_at')
-          .eq('user_id', user.id)
+          .eq('user_id', session.user.id)
           .eq('provider', 'google')
           .single();
 
@@ -433,7 +453,7 @@ export default function ContactsListPage() {
                 headers: {
                   'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ user_id: user.id }),
+                body: JSON.stringify({ user_id: session.user.id }),
               });
               
               if (response.ok) {
@@ -590,14 +610,14 @@ export default function ContactsListPage() {
   useEffect(() => {
     const loadProfileData = async () => {
       const supabase = createClient();
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) return;
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) return;
 
       // Load profile
       const { data: profileData } = await supabase
         .from('profiles')
         .select('full_name, resume_path')
-        .eq('id', user.id)
+        .eq('id', session.user.id)
         .single();
       
       if (profileData) {
@@ -607,7 +627,7 @@ export default function ContactsListPage() {
       // Load resume files
       try {
         setLoadingResumes(true);
-        const { data: resumeData } = await supabase.storage.from('resumes').list(`${user.id}/`);
+        const { data: resumeData } = await supabase.storage.from('resumes').list(`${session.user.id}/`);
         setResumeFiles(resumeData || []);
       } catch (error) {
         console.error('Error loading resumes:', error);
