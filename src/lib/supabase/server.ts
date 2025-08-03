@@ -13,19 +13,25 @@ export const createClient = async () => {
           return cookieStore.get(name)?.value;
         },
         set: (name: string, value: string, options: CookieOptions) => {
-          try {
-            cookieStore.set({ name, value, ...options });
-          } catch (error) {
-            // Silently handle cookie setting errors in non-server action contexts
-            console.warn('Cookie set failed (likely not in server action context):', error);
+          // Only set cookies in server actions or route handlers
+          if (typeof window === 'undefined') {
+            try {
+              cookieStore.set({ name, value, ...options });
+            } catch (error) {
+              // Silently handle cookie setting errors in non-server action contexts
+              console.warn('Cookie set failed (likely not in server action context):', error);
+            }
           }
         },
         remove: (name: string, options: CookieOptions) => {
-          try {
-            cookieStore.set({ name, value: '', ...options });
-          } catch (error) {
-            // Silently handle cookie removal errors in non-server action contexts
-            console.warn('Cookie remove failed (likely not in server action context):', error);
+          // Only remove cookies in server actions or route handlers
+          if (typeof window === 'undefined') {
+            try {
+              cookieStore.set({ name, value: '', ...options });
+            } catch (error) {
+              // Silently handle cookie removal errors in non-server action contexts
+              console.warn('Cookie remove failed (likely not in server action context):', error);
+            }
           }
         },
       },

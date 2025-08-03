@@ -4,7 +4,7 @@ import { google } from 'googleapis';
 
 export async function POST(request: NextRequest) {
   try {
-    const { contactIds, customMessage } = await request.json();
+    const { contactIds, customMessage, individualMessages } = await request.json();
     
     if (!contactIds || !Array.isArray(contactIds) || contactIds.length === 0) {
       return NextResponse.json({ error: 'Contact IDs are required' }, { status: 400 });
@@ -21,7 +21,8 @@ export async function POST(request: NextRequest) {
     let isPremium = false;
     let usageCount = 0;
 
-    if (!customMessage) {
+    // If we have individual messages, we don't need to check limits since they're pre-generated
+    if (!customMessage && !individualMessages) {
       const [
         { data: subscription, error: subscriptionError },
         { data: profile, error: profileError }
@@ -49,6 +50,7 @@ export async function POST(request: NextRequest) {
       .from('user_tokens')
       .select('access_token, refresh_token, expires_at')
       .eq('user_id', user.id)
+      .eq('provider', 'google')
       .single();
 
     if (tokenError || !tokens) {
@@ -105,8 +107,10 @@ export async function POST(request: NextRequest) {
             .update({
               access_token: credentials.access_token,
               expires_at: credentials.expiry_date ? new Date(credentials.expiry_date).toISOString() : null,
+              updated_at: new Date().toISOString()
             })
-            .eq('user_id', user.id);
+            .eq('user_id', user.id)
+            .eq('provider', 'google');
           
           // Update oauth2Client with new token
           oauth2Client.setCredentials(credentials);
@@ -124,20 +128,27 @@ export async function POST(request: NextRequest) {
 
     for (const contact of contacts) {
       try {
-        // Use the custom message if provided, otherwise generate a new one
-        let emailContent = customMessage;
+        // Determine email content based on available options
+        let emailContent = '';
         
-        if (!customMessage) {
+        if (individualMessages && individualMessages[contact.id]) {
+          // Use individual message for this specific contact
+          emailContent = individualMessages[contact.id];
+        } else if (customMessage) {
+          // Use global custom message
+          emailContent = customMessage;
+        } else {
+          // Generate AI message if no custom message provided
           // Increment count before generating
           if (!isPremium) {
             usageCount++;
           }
-          // Generate AI message if no custom message provided
+          
           const aiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.GOOGLE_AI_API_KEY}`,
+              'Authorization': `Bearer ${process.env.GOOGLE_API_KEY}`,
             },
             body: JSON.stringify({
               contents: [{

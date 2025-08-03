@@ -40,11 +40,16 @@ export async function GET(request: Request) {
       // Store Gmail tokens if this was a Google OAuth login
       if (data.session.provider_token && data.session.provider_refresh_token) {
         try {
+          // Calculate expiration time (Google tokens typically expire in 1 hour)
+          const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
+          
           const tokenData = {
             user_id: data.session.user.id,
             access_token: data.session.provider_token,
             refresh_token: data.session.provider_refresh_token,
-            expires_at: new Date(Date.now() + 3600 * 1000).toISOString(), // 1 hour from now
+            expires_at: expiresAt,
+            provider: 'google',
+            updated_at: new Date().toISOString()
           };
           
           console.log('Storing Gmail tokens for user:', data.session.user.id);
