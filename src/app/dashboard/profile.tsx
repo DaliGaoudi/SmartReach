@@ -1,7 +1,7 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { stripeRedirect } from '@/app/pricing/actions';
 
@@ -17,6 +17,7 @@ type ResumeFile = {
 export default function ProfileManager({ session }: { session: any }) {
   const supabase = createClient();
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [uploading, setUploading] = useState(false);
   const [profile, setProfile] = useState<{ full_name: string | null, resume_path: string | null } | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
@@ -190,13 +191,15 @@ export default function ProfileManager({ session }: { session: any }) {
     }
   };
 
-  const handleManageBilling = async () => {
-    try {
-      const { url } = await stripeRedirect('/dashboard/profile');
-      if (url) window.location.href = url;
-    } catch (error) {
-      alert(`Error redirecting to billing: ${(error as Error).message}`);
-    }
+  const handleManageBilling = () => {
+    startTransition(async () => {
+      try {
+        const { url } = await stripeRedirect('/dashboard/profile');
+        if (url) window.location.href = url;
+      } catch (error) {
+        alert(`Error redirecting to billing: ${(error as Error).message}`);
+      }
+    });
   };
 
   const getResumeFileName = (path: string) => path.split('/').pop();
@@ -287,8 +290,12 @@ export default function ProfileManager({ session }: { session: any }) {
                   <p className="text-green-400 font-medium">{subscription ? 'Active' : 'Free'}</p>
                 </div>
               </div>
-              <button onClick={handleManageBilling} className="w-full inline-flex items-center justify-center h-10 px-6 rounded-xl bg-pink-500 text-zinc-50 font-semibold text-base shadow-md hover:bg-pink-600 transition-colors duration-200">
-                {subscription ? 'Manage Billing' : 'Upgrade Plan'}
+              <button 
+                onClick={handleManageBilling} 
+                disabled={isPending}
+                className="w-full inline-flex items-center justify-center h-10 px-6 rounded-xl bg-pink-500 text-zinc-50 font-semibold text-base shadow-md hover:bg-pink-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isPending ? 'Loading...' : (subscription ? 'Manage Billing' : 'Upgrade Plan')}
               </button>
             </div>
           </div>

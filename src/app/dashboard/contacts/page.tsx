@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Papa from 'papaparse';
 import { stripeRedirect } from '@/app/pricing/actions';
@@ -26,6 +26,7 @@ type EmailPreview = {
 };
 
 export default function ContactsListPage() {
+  const [isPending, startTransition] = useTransition();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -618,13 +619,15 @@ export default function ContactsListPage() {
     setNameChanged(true);
   };
 
-  const handleManageBilling = async () => {
-    try {
-      const { url } = await stripeRedirect('/dashboard/contacts');
-      if (url) window.location.href = url;
-    } catch (error) {
-      alert(`Error redirecting to billing: ${(error as Error).message}`);
-    }
+  const handleManageBilling = () => {
+    startTransition(async () => {
+      try {
+        const { url } = await stripeRedirect('/dashboard/contacts');
+        if (url) window.location.href = url;
+      } catch (error) {
+        alert(`Error redirecting to billing: ${(error as Error).message}`);
+      }
+    });
   };
 
   const getResumeFileName = (path: string) => path.split('/').pop();
@@ -1341,8 +1344,12 @@ export default function ContactsListPage() {
                     <p className="text-green-600 font-medium">{subscription ? 'Active' : 'Free'}</p>
                   </div>
                 </div>
-                <button onClick={handleManageBilling} className="w-full inline-flex items-center justify-center h-10 px-6 rounded-xl bg-pink-500 text-white font-semibold text-base shadow-md hover:bg-pink-600 transition-colors duration-200">
-                  {subscription ? 'Manage Billing' : 'Upgrade Plan'}
+                <button 
+                  onClick={handleManageBilling} 
+                  disabled={isPending}
+                  className="w-full inline-flex items-center justify-center h-10 px-6 rounded-xl bg-pink-500 text-white font-semibold text-base shadow-md hover:bg-pink-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isPending ? 'Loading...' : (subscription ? 'Manage Billing' : 'Upgrade Plan')}
                 </button>
               </div>
             </div>
