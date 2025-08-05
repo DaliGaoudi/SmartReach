@@ -63,30 +63,26 @@ export const stripeRedirect = async (path: string) => {
         data: { user }
     } = await supabase.auth.getUser();
 
-    if (user) {
-        const { data, error } = await supabase.from('subscriptions').select('*').eq('user_id', user.id).single();
-
-        if (data && !error) {
-            // User has a subscription - redirect to Stripe billing portal
-            const stripeSession = await stripe.billingPortal.sessions.create({
-                customer: (await createOrRetrieveCustomer({
-                    uuid: user.id || '',
-                    email: user.email || ''
-                })),
-                return_url: `${getURL()}${path}`
-            })
-
-            if (!stripeSession) {
-                throw new Error('Could not create stripe session.');
-            }
-
-            return { url: stripeSession.url };
-        } else {
-            // User doesn't have a subscription - redirect to pricing page
-            return { url: `${getURL()}/pricing` };
-        }
+    if (!user) {
+        // No user - redirect to login page
+        return { url: `${getURL()}/login` };
     }
 
-    // No user - redirect to pricing page
-    return { url: `${getURL()}/pricing` };
+    const customer = await createOrRetrieveCustomer({
+        uuid: user.id || '',
+        email: user.email || ''
+    });
+
+    // Always create a billing portal session, which will handle both managing existing subscriptions
+    // and creating new ones through the Stripe Customer Portal
+    const stripeSession = await stripe.billingPortal.sessions.create({
+        customer,
+        return_url: `${getURL()}${path}`
+    });
+
+    if (!stripeSession) {
+        throw new Error('Could not create stripe session.');
+    }
+
+    return { url: stripeSession.url };
 } 
