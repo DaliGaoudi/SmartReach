@@ -34,11 +34,13 @@
     "@google/generative-ai": "^0.24.1",
     "@radix-ui/react-slot": "^1.2.3",
     "@stripe/stripe-js": "^7.3.1",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.50.0",
     "@vercel/analytics": "^1.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "googleapis": "^150.0.1",
     "lucide-react": "^0.522.0",
     "next": "15.3.4",
@@ -48,7 +50,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "stripe": "^18.2.1",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
