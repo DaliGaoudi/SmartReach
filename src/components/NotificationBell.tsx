@@ -50,7 +50,7 @@ export function NotificationBell() {
     }
   };
 
-  const handleNewNotification = (payload: any) => {
+    const handleNewNotification = (payload: any) => {
     const newNotification = payload.new as Notification;
     setUnreadCount(count => count + 1);
     setNotifications(prev => [newNotification, ...prev]);
@@ -61,16 +61,8 @@ export function NotificationBell() {
         body: newNotification.message,
         icon: '/logo.jpg'
       });
-
-      // Play notification sound
-      const audio = new Audio('/notification.mp3');
-      audio.play().catch(() => {
-        // Ignore audio play errors
-      });
     }
-  };
-
-  const markAsRead = async (notificationId: string) => {
+  };  const markAsRead = async (notificationId: string) => {
     await supabase
       .from('notifications')
       .update({ read: true })
