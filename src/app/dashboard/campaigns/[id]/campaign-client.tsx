@@ -3,16 +3,18 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import type { CampaignContact } from '@/types/campaign';
+import type { CampaignWithContacts, CampaignContact } from '@/types/campaign';
 import type { Contact } from '@/types';
+
+interface CampaignClientProps {
+  campaign: CampaignWithContacts;
+  availableContacts: Contact[];
+}
 
 export default function CampaignClient({ 
   campaign,
   availableContacts 
-}: { 
-  campaign: any;
-  availableContacts: Contact[];
-}) {
+}: CampaignClientProps) {
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -78,7 +80,7 @@ export default function CampaignClient({
         <div className="flex gap-4">
           <select
             value={campaign.status}
-            onChange={(e) => updateCampaignStatus(e.target.value as any)}
+            onChange={(e) => updateCampaignStatus(e.target.value as 'active' | 'paused' | 'completed')}
             className="rounded-md border-gray-300"
           >
             <option value="active">Active</option>
