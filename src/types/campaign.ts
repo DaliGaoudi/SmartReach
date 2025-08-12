@@ -21,5 +21,5 @@ export type CampaignContact = {
 };
 
 export type CampaignWithContacts = Campaign & {
-  contacts: CampaignContact[];
+  campaign_contacts?: CampaignContact[];
 };

@@ -1,12 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import type { CampaignWithContacts } from '@/types/campaign';
+import type { CampaignWithContacts, CampaignContact } from '@/types/campaign';
 import type { Contact } from '@/types';
 
-export default function CampaignPage({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: {
+    id: string;
+  };
+  searchParams?: Record<string, string | string[] | undefined>;
+}
+
+export default function CampaignPage({ params }: PageProps) {
   const [campaign, setCampaign] = useState<CampaignWithContacts | null>(null);
   const [availableContacts, setAvailableContacts] = useState<Contact[]>([]);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
@@ -14,11 +21,7 @@ export default function CampaignPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const supabase = createClient();
 
-  useEffect(() => {
-    fetchCampaignData();
-  }, [params.id]);
-
-  const fetchCampaignData = async () => {
+  const fetchCampaignData = useCallback(async () => {
     setIsLoading(true);
     try {
       // Fetch campaign details
@@ -40,7 +43,7 @@ export default function CampaignPage({ params }: { params: { id: string } }) {
       const { data: contactsData, error: contactsError } = await supabase
         .from('contacts')
         .select('*')
-        .not('id', 'in', (campaignData?.campaign_contacts || []).map(cc => cc.contact_id));
+        .not('id', 'in', (campaignData?.campaign_contacts || []).map((cc: CampaignContact) => cc.contact_id));
 
       if (contactsError) throw contactsError;
 
@@ -52,7 +55,11 @@ export default function CampaignPage({ params }: { params: { id: string } }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [params.id, router, supabase]);
+
+  useEffect(() => {
+    fetchCampaignData();
+  }, [fetchCampaignData]);
 
   const addContactsToCampaign = async () => {
     if (!selectedContacts.length) return;
@@ -178,7 +185,7 @@ export default function CampaignPage({ params }: { params: { id: string } }) {
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <h2 className="text-lg font-semibold mb-4">Campaign Contacts</h2>
         <div className="space-y-4">
-          {campaign.campaign_contacts?.map((cc) => (
+          {campaign.campaign_contacts?.map((cc: CampaignContact) => (
             <div
               key={cc.id}
               className="flex justify-between items-center p-4 bg-gray-50 rounded-lg"
