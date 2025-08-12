@@ -1,146 +1,75 @@
-import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
-import type { CampaignWithContacts } from '@/types/campaign';
+'use client';
+
+import { useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
+import type { CampaignContact } from '@/types/campaign';
 import type { Contact } from '@/types';
-import CampaignClient from './campaign-client';
 
-interface Props {
-  params: {
-    id: string;
-  };
-  searchParams?: { [key: string]: string | string[] | undefined };
-}
-
-export default async function CampaignPage({ params }: Props) {
-  const supabase = await createClient();
-
-  // Fetch campaign details
-  const { data: campaignData, error: campaignError } = await supabase
-    .from('campaigns')
-    .select(`
-      *,
-      campaign_contacts (
-        *,
-        contact:contacts (*)
-      )
-    `)
-    .eq('id', params.id)
-    .single();
-
-  if (campaignError || !campaignData) {
-    redirect('/dashboard/campaigns');
-  }
-
-  // Fetch available contacts
-  const { data: contactsData, error: contactsError } = await supabase
-    .from('contacts')
-    .select('*')
-    .not('id', 'in', (campaignData.campaign_contacts || []).map((cc: { contact_id: string }) => cc.contact_id));
-
-  if (contactsError) {
-    console.error('Error fetching contacts:', contactsError);
-  }
-
-  return <CampaignClient campaign={campaignData} availableContacts={contactsData || []} />;
-
-  const fetchCampaignData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      // Fetch campaign details
-      const { data: campaignData, error: campaignError } = await supabase
-        .from('campaigns')
-        .select(`
-          *,
-          campaign_contacts (
-            *,
-            contact:contacts (*)
-          )
-        `)
-        .eq('id', params.id)
-        .single();
-
-      if (campaignError) throw campaignError;
-
-      // Fetch available contacts
-      const { data: contactsData, error: contactsError } = await supabase
-        .from('contacts')
-        .select('*')
-        .not('id', 'in', (campaignData?.campaign_contacts || []).map((cc: CampaignContact) => cc.contact_id));
-
-      if (contactsError) throw contactsError;
-
-      setCampaign(campaignData);
-      setAvailableContacts(contactsData);
-    } catch (error) {
-      console.error('Error fetching campaign:', error);
-      router.push('/dashboard/campaigns');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [params.id, router, supabase]);
-
-  useEffect(() => {
-    fetchCampaignData();
-  }, [fetchCampaignData]);
+export default function CampaignClient({ 
+  campaign,
+  availableContacts 
+}: { 
+  campaign: any;
+  availableContacts: Contact[];
+}) {
+  const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const supabase = createClient();
 
   const addContactsToCampaign = async () => {
     if (!selectedContacts.length) return;
+    setIsLoading(true);
 
-    const { error } = await supabase
-      .from('campaign_contacts')
-      .insert(
-        selectedContacts.map(contactId => ({
-          campaign_id: params.id,
-          contact_id: contactId,
-          status: 'pending'
-        }))
-      );
+    try {
+      const { error } = await supabase
+        .from('campaign_contacts')
+        .insert(
+          selectedContacts.map(contactId => ({
+            campaign_id: campaign.id,
+            contact_id: contactId,
+            status: 'pending'
+          }))
+        );
 
-    if (error) {
+      if (error) throw error;
+      router.refresh();
+      setSelectedContacts([]);
+    } catch (error) {
       console.error('Error adding contacts:', error);
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    // Refresh data
-    fetchCampaignData();
-    setSelectedContacts([]);
   };
 
   const removeContactFromCampaign = async (contactId: string) => {
-    const { error } = await supabase
-      .from('campaign_contacts')
-      .delete()
-      .match({ campaign_id: params.id, contact_id: contactId });
+    try {
+      const { error } = await supabase
+        .from('campaign_contacts')
+        .delete()
+        .match({ campaign_id: campaign.id, contact_id: contactId });
 
-    if (error) {
+      if (error) throw error;
+      router.refresh();
+    } catch (error) {
       console.error('Error removing contact:', error);
-      return;
     }
-
-    fetchCampaignData();
   };
 
   const updateCampaignStatus = async (status: 'active' | 'paused' | 'completed') => {
-    const { error } = await supabase
-      .from('campaigns')
-      .update({ status })
-      .eq('id', params.id);
+    try {
+      const { error } = await supabase
+        .from('campaigns')
+        .update({ status })
+        .eq('id', campaign.id);
 
-    if (error) {
+      if (error) throw error;
+      router.refresh();
+    } catch (error) {
       console.error('Error updating campaign status:', error);
-      return;
     }
-
-    setCampaign(prev => prev ? { ...prev, status } : null);
   };
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!campaign) {
-    return <div>Campaign not found</div>;
-  }
 
   return (
     <div className="space-y-6">
@@ -195,10 +124,10 @@ export default async function CampaignPage({ params }: Props) {
           </select>
           <button
             onClick={addContactsToCampaign}
-            disabled={!selectedContacts.length}
+            disabled={!selectedContacts.length || isLoading}
             className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            Add Selected Contacts
+            {isLoading ? 'Adding...' : 'Add Selected Contacts'}
           </button>
         </div>
       </div>
