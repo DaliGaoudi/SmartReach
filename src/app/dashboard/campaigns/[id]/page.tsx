@@ -3,20 +3,8 @@ import { redirect } from 'next/navigation';
 import CampaignClient from './campaign-client';
 import { CampaignWithContacts } from '@/types/campaign';
 import { Contact } from '@/types';
-import type { Metadata } from 'next';
 
-export type Props = {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-};
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  return {
-    title: `Campaign ${params.id} - SmartReach`,
-  };
-}
-
-export default async function CampaignPage({ params, searchParams }: Props) {
+export default async function CampaignPage({ params }: { params: { id: string } }) {
   const supabase = await createClient();
 
   // Fetch campaign details with contacts
