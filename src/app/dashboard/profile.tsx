@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { stripeRedirect } from '@/app/pricing/actions';
+const isSoftLaunch = process.env.SOFT_LAUNCH === 'true';
 import { formatUsageMessage } from '@/lib/subscription-limits-client';
 import { getUsageStats } from './actions';
 
@@ -206,6 +207,11 @@ export default function ProfileManager({ session }: { session: any }) {
   };
 
   const handleManageBilling = () => {
+    if (isSoftLaunch) {
+      // During soft launch, redirect to waitlist instead of Stripe
+      window.location.href = '/waitlist';
+      return;
+    }
     startTransition(async () => {
       try {
         const { url } = await stripeRedirect('/dashboard/profile');
