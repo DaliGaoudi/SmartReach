@@ -90,7 +90,7 @@ export default function TermsOfService() {
         <p style={{ marginBottom: 16 }}>
           If you have questions about these terms, please contact us at:
           <br />
-          <a href="mailto:legal@smartsendr.com" style={{ color: '#ec4899' }}>legal@smartsendr.com</a>
+          <a href="mailto:legal@smartsendr.org" style={{ color: '#ec4899' }}>legal@smartsendr.org</a>
         </p>
       </section>
 

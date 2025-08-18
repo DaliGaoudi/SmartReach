@@ -72,7 +72,7 @@ export default function PrivacyPolicy() {
         <p style={{ marginBottom: 16 }}>
           If you have questions about this privacy policy, please contact us at:
           <br />
-          <a href="mailto:privacy@smartsendr.com" style={{ color: '#ec4899' }}>privacy@smartsendr.com</a>
+          <a href="mailto:privacy@smartsendr.org" style={{ color: '#ec4899' }}>privacy@smartsendr.org</a>
         </p>
       </section>
 
