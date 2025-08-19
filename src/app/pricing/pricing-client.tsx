@@ -19,6 +19,9 @@ import { cn } from '@/lib/utils';
 import { createCheckoutSession, stripeRedirect } from './actions';
 import { getStripe } from '@/lib/stripe/client';
 
+// Environment variable for soft launch mode
+const isSoftLaunch = process.env.NEXT_PUBLIC_SOFT_LAUNCH === 'true';
+
 type PricingProps = {
     user: User | null;
     products: ProductWithPrice[];
@@ -39,6 +42,13 @@ export default function Pricing({
 
     const handleCheckout = async (price: Price) => {
         setPriceIdLoading(price.id);
+        
+        if (isSoftLaunch) {
+            setPriceIdLoading(undefined);
+            window.location.href = '/waitlist';
+            return;
+        }
+
         if (!user) {
             setPriceIdLoading(undefined);
             return stripeRedirect('/login');
