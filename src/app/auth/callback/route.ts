@@ -3,14 +3,17 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get('code');
-  // Always redirect to dashboard after successful auth
-  const next = '/dashboard';
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get('code');
+  const next = requestUrl.searchParams.get('next') || '/dashboard';
+  
+  if (!code) {
+    console.error('No code in callback');
+    return NextResponse.redirect(`${requestUrl.origin}/auth/auth-code-error`);
+  }
 
-  if (code) {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
