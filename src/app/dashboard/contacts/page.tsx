@@ -511,11 +511,13 @@ export default function ContactsListPage() {
   const connectGmail = async () => {
     try {
       const supabase = createClient();
+      // Use the site URL from environment variable instead of window.location.origin
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.smartsendr.org';
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           scopes: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
-          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard/contacts`,
+          redirectTo: `${siteUrl}/auth/callback?next=/dashboard/contacts`,
           queryParams: { 
             access_type: 'offline', 
             prompt: 'consent',

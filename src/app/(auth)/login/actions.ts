@@ -40,12 +40,12 @@ export async function login(formData: FormData) {
 }
 
 export async function googleLogin() {
-  const headersList = await headers();
-  const host = headersList.get('host');
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-  const origin = `${protocol}://${host}`;
+  // Use the explicitly set NEXT_PUBLIC_SITE_URL instead of deriving from host header
+  // This ensures consistent redirect URL regardless of Vercel preview URLs or other domains
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.smartsendr.org';
+  const redirectUrl = `${siteUrl}/auth/callback`;
   
-  console.log('Google login origin:', origin);
+  console.log('Google OAuth redirect URL:', redirectUrl);
   
   const cookieStore = await cookies();
 
@@ -66,9 +66,6 @@ export async function googleLogin() {
       },
     }
   );
-
-  const redirectUrl = `${origin}/auth/callback`;
-  console.log('Google OAuth redirect URL:', redirectUrl);
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',

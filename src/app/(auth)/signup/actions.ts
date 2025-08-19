@@ -44,7 +44,8 @@ export async function signup(formData: FormData) {
 }
 
 export async function googleSignup() {
-  const origin = (await headers()).get('origin');
+  // Use the explicitly set NEXT_PUBLIC_SITE_URL instead of deriving from origin header
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.smartsendr.org';
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -68,7 +69,7 @@ export async function googleSignup() {
     provider: 'google',
     options: {
       scopes: 'https://www.googleapis.com/auth/gmail.send',
-      redirectTo: `${origin}/auth/callback`,
+      redirectTo: `${siteUrl}/auth/callback`,
     },
   });
 
