@@ -65,7 +65,7 @@ export async function googleLogin() {
     provider: 'google',
     options: {
       scopes: 'https://www.googleapis.com/auth/gmail.send',
-      redirectTo: `${origin}/auth/callback`,
+      redirectTo: `${origin}/auth/callback?next=/dashboard`,
     },
   });
 
