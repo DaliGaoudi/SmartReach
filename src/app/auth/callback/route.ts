@@ -26,7 +26,7 @@ export async function GET(request: Request) {
             name, 
             value, 
             ...options,
-            httpOnly: true,
+            httpOnly: false,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/'
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
             name, 
             value: '', 
             ...options,
-            httpOnly: true,
+            httpOnly: false,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
