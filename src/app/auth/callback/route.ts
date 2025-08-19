@@ -92,7 +92,8 @@ export async function GET(request: Request) {
     }
    
     // Create the redirect response
-    const redirectResponse = NextResponse.redirect(`${requestUrl.origin}${next}`);
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://smartsendr.org'
+    const redirectResponse = NextResponse.redirect(`${siteUrl}${next}` )
     
     // Ensure cookies are properly set in the response
     return redirectResponse;
