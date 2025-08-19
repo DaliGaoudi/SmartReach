@@ -49,7 +49,7 @@ export const createCheckoutSession = async (price: Price) => {
             }
         },
         success_url: `${getURL()}/dashboard`,
-        cancel_url: `${getURL()}/`
+        cancel_url: `${getURL()}/waitlist`
     });
     if (!session) {
         throw new Error('Could not create checkout session.');
