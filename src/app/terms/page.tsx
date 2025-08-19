@@ -19,7 +19,7 @@ export default function TermsOfService() {
           <li>Manage and organize contact lists</li>
           <li>Generate personalized cold emails using AI</li>
           <li>Send emails through Gmail integration</li>
-          <li>Track email campaign performance</li>
+          <li>Track email performance and metrics</li>
         </ul>
       </section>
 

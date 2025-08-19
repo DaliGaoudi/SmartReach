@@ -136,7 +136,7 @@ PHASE 3: ADVANCED FEATURES
   - Monitor click-through rates
   - Track email delivery status
   - Response tracking
-  - Campaign performance dashboard
+  - Performance dashboard
 
 □ User Analytics
   - User behavior tracking

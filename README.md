@@ -1,6 +1,6 @@
 # Smart Reach 🚀
 
-A powerful email outreach automation platform built with Next.js, Supabase, and Google AI. Smart Reach helps you create personalized email campaigns, manage contacts, and automate your outreach process with AI-powered content generation.
+A powerful email outreach automation platform built with Next.js, Supabase, and Google AI. Smart Reach helps you create personalized emails, manage contacts, and automate your outreach process with AI-powered content generation.
 
 ## ✨ Features
 
