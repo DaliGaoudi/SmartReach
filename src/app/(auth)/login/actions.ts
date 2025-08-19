@@ -40,7 +40,13 @@ export async function login(formData: FormData) {
 }
 
 export async function googleLogin() {
-  const origin = (await headers()).get('origin');
+  const headersList = await headers();
+  const host = headersList.get('host');
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const origin = `${protocol}://${host}`;
+  
+  console.log('Google login origin:', origin);
+  
   const cookieStore = await cookies();
 
   const supabase = createServerClient(
@@ -61,21 +67,30 @@ export async function googleLogin() {
     }
   );
 
+  const redirectUrl = `${origin}/auth/callback`;
+  console.log('Google OAuth redirect URL:', redirectUrl);
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      scopes: 'https://www.googleapis.com/auth/gmail.send',
-      redirectTo: `${origin}/auth/callback?next=/dashboard`,
+      scopes: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly',
+      redirectTo: redirectUrl,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
     },
   });
 
   if (error) {
     console.error('Error logging in with Google:', error);
-    // TODO: Handle error display to the user
-    return;
+    return { error: error.message };
   }
   
   if (data.url) {
+    console.log('Redirecting to Google OAuth URL:', data.url);
     redirect(data.url);
   }
-} 
+  
+  return { error: 'Failed to initiate Google login' };
+}
