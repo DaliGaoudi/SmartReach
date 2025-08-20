@@ -51,7 +51,8 @@ export default function Pricing({
 
         if (!user) {
             setPriceIdLoading(undefined);
-            return stripeRedirect('/login');
+            window.location.href = '/login';
+            return;
         }
         if (subscription) {
             setPriceIdLoading(undefined);
