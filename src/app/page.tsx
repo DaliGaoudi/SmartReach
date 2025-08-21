@@ -13,7 +13,7 @@ export default function Home() {
           <p className="text-base sm:text-lg text-zinc-200 text-center font-medium">Personalized Cold Emails, Scaled.</p>
         </div>
         <p className="text-zinc-400 text-center text-sm sm:text-base max-w-xs">
-          Connect your Gmail, upload your contacts, and let our AI craft unique messages for each person.
+          SmartSendr is an AI-powered email outreach platform designed to help you create personalized cold emails, manage contacts, and automate your outreach process efficiently. Connect your Gmail, upload your contacts, and let our AI craft unique messages for each person, streamlining your communication and boosting your engagement.
         </p>
         <div className="w-full space-y-3">
           <Link
