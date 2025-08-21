@@ -16,11 +16,10 @@ export default function Home() {
           <p>SmartSendr is your ultimate AI-powered email outreach platform.</p>
           <p>We help you:</p>
           <ul className="list-disc list-inside text-left mx-auto" style={{ maxWidth: 'fit-content' }}>
-            <li>Create personalized cold emails with AI.</li>
+            <li>Use your Resume to create personalized cold emails with AI.</li>
             <li>Effortlessly manage your contacts.</li>
             <li>Automate your outreach process.</li>
             <li>Streamline communication and boost engagement.</li>
-            <li>Add your Resume and Let the AI handle the rest</li>
           </ul>
           <p>Connect your Gmail, upload your contacts, and let our AI craft unique messages for each person.</p>
         </div>
