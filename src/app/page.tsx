@@ -12,9 +12,17 @@ export default function Home() {
           <span className="text-3xl sm:text-4xl font-extrabold text-pink-500 tracking-tight text-center">SmartSendr</span>
           <p className="text-base sm:text-lg text-zinc-200 text-center font-medium">Personalized Cold Emails, Scaled.</p>
         </div>
-        <p className="text-zinc-400 text-center text-sm sm:text-base max-w-xs">
-          SmartSendr is an AI-powered email outreach platform designed to help you create personalized cold emails, manage contacts, and automate your outreach process efficiently. Connect your Gmail, upload your contacts, and let our AI craft unique messages for each person, streamlining your communication and boosting your engagement.
-        </p>
+        <div className="text-zinc-400 text-center text-sm sm:text-base max-w-xs space-y-4">
+          <p>SmartSendr is your ultimate AI-powered email outreach platform.</p>
+          <p>We help you:</p>
+          <ul className="list-disc list-inside text-left mx-auto" style={{ maxWidth: 'fit-content' }}>
+            <li>Create personalized cold emails with AI.</li>
+            <li>Effortlessly manage your contacts.</li>
+            <li>Automate your outreach process.</li>
+            <li>Streamline communication and boost engagement.</li>
+          </ul>
+          <p>Connect your Gmail, upload your contacts, and let our AI craft unique messages for each person.</p>
+        </div>
         <div className="w-full space-y-3">
           <Link
             href="/dashboard"
