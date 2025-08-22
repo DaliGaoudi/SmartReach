@@ -93,7 +93,30 @@ export async function GET(request: Request) {
    
     // Create the redirect response
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.smartsendr.org'
-const redirectResponse = NextResponse.redirect(`${siteUrl}${next}` )
+    const redirectResponse = NextResponse.redirect(`${siteUrl}${next}` )
+
+    // Check if user is new and insert trialing subscription
+    const { data: existingSubscription } = await supabase
+      .from('subscriptions')
+      .select('id')
+      .eq('user_id', data.session.user.id)
+      .single();
+
+    if (!existingSubscription) {
+      const { error: insertError } = await supabase
+        .from("subscriptions")
+        .insert({
+          user_id: data.session.user.id,
+          status: "trialing",
+          created: new Date().toISOString(),
+          current_period_start: new Date().toISOString(),
+          current_period_end: new Date().toISOString(),
+        });
+
+      if (insertError) {
+        console.error("Error inserting trialing subscription for new Google user:", insertError);
+      }
+    }
     
     // Ensure cookies are properly set in the response
     return redirectResponse;

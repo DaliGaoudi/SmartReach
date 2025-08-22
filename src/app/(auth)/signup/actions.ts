@@ -101,22 +101,5 @@ export async function googleSignup() {
     redirect(data.url);
   }
 
-  // Insert into subscriptions table with 'trialing' status for Google signup
-  if (data.user) {
-    const { error: insertError } = await supabase
-      .from("subscriptions")
-      .insert({
-        user_id: data.user.id,
-        status: "trialing",
-        created: new Date().toISOString(),
-        current_period_start: new Date().toISOString(),
-        current_period_end: new Date().toISOString(),
-      });
 
-    if (insertError) {
-      console.error("Error inserting trialing subscription for Google user:", insertError);
-      // Decide how to handle this error: redirect to an error page, show a message, etc.
-      // For now, we'll just log it and proceed with the redirect if data.url exists.
-    }
-  }
 } 
