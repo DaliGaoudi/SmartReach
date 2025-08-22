@@ -47,9 +47,9 @@ export async function signup(formData: FormData) {
       .insert({
         user_id: data.user.id,
         status: "trialing",
-        created: new Date().toISOString(),
-        current_period_start: new Date().toISOString(),
-        current_period_end: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        //current_period_start: new Date().toISOString(),
+        //current_period_end: new Date().toISOString(),
       });
 
     if (insertError) {
