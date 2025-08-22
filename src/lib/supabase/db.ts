@@ -241,8 +241,8 @@ export const manageSubscriptionStatusChange = async (
     };
 
     const { error } = await supabase
-        .from('subscriptions')
-        .upsert([subscriptionData]);
+        .from("subscriptions")
+        .upsert([subscriptionData], { onConflict: ["id", "user_id"] });
     if (error) throw error;
     console.log(
         `Inserted/updated subscription [${subscription.id}] for user [${uuid}]`

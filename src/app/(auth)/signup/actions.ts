@@ -28,7 +28,7 @@ export async function signup(formData: FormData) {
     }
   );
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -38,6 +38,24 @@ export async function signup(formData: FormData) {
 
   if (error) {
     return { error: error.message };
+  }
+
+  // Insert into subscriptions table with 'trialing' status
+  if (data.user) {
+    const { error: insertError } = await supabase
+      .from("subscriptions")
+      .insert({
+        user_id: data.user.id,
+        status: "trialing",
+        created: new Date().toISOString(),
+        current_period_start: new Date().toISOString(),
+        current_period_end: new Date().toISOString(),
+      });
+
+    if (insertError) {
+      console.error("Error inserting trialing subscription:", insertError);
+      return { error: "Account created, but failed to set up trial. Please contact support." };
+    }
   }
 
   return { success: 'Check your email and click the confirmation link to activate your account.' };
@@ -81,5 +99,24 @@ export async function googleSignup() {
 
   if (data.url) {
     redirect(data.url);
+  }
+
+  // Insert into subscriptions table with 'trialing' status for Google signup
+  if (data.user) {
+    const { error: insertError } = await supabase
+      .from("subscriptions")
+      .insert({
+        user_id: data.user.id,
+        status: "trialing",
+        created: new Date().toISOString(),
+        current_period_start: new Date().toISOString(),
+        current_period_end: new Date().toISOString(),
+      });
+
+    if (insertError) {
+      console.error("Error inserting trialing subscription for Google user:", insertError);
+      // Decide how to handle this error: redirect to an error page, show a message, etc.
+      // For now, we'll just log it and proceed with the redirect if data.url exists.
+    }
   }
 } 
