@@ -31,13 +31,13 @@ export const getSubscription = async (): Promise<{ subscription: Subscription | 
         .from('subscriptions')
         .select('*, prices(*, products(*))')
         .in('status', ['trialing', 'active'])
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.log(error.message);
     }
 
-    return { subscription: (data as any), user };
+    return { subscription: (data as Subscription | null), user };
 }
 
 export const getUserDetails = async (): Promise<UserDetails | null> => {
