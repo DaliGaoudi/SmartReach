@@ -21,69 +21,29 @@ export const getProducts = async (): Promise<Product[]> => {
 
 export const getSubscription = async (): Promise<{ subscription: Subscription | null, user: any }> => {
     const supabase = await createClient();
-    
-    try {
-        // Detailed user retrieval logging
-        const { data: authData, error: authError } = await supabase.auth.getUser();
-        console.log('Auth User Retrieval:', {
-            user: authData.user,
-            error: authError
-        });
+    const { data: { user } } = await supabase.auth.getUser();
 
-        const user = authData.user;
-
-        if (!user) {
-            console.warn('No authenticated user found');
-            return { subscription: null, user: null };
-        }
-
-        // Verbose query with expanded logging
-        console.log('Querying subscriptions with:', {
-            userId: user.id,
-            statuses: ['trialing', 'active']
-        });
-
-        const { data, error } = await supabase
-            .from('subscriptions')
-            .select('*, prices(*, products(*))')
-            .eq('user_id', user.id)
-            .in('status', ['trialing', 'active'])
-            .maybeSingle();
-
-        // Comprehensive error logging
-        if (error) {
-            console.error('Subscription Query Error:', {
-                message: error.message,
-                details: error.details,
-                hint: error.hint,
-                code: error.code,
-                fullError: error
-            });
-
-            // Diagnostic RPC to check table access
-            const { data: accessCheck, error: accessError } = await supabase.rpc('debug_subscription_access', {
-                input_user_id: user.id
-            });
-
-            console.log('Access Check Result:', {
-                accessCheck,
-                accessError
-            });
-
-            return { subscription: null, user };
-        }
-
-        console.log('Subscription Query Result:', data);
-
-        return { 
-            subscription: (data as Subscription | null), 
-            user 
-        };
-
-    } catch (catchError) {
-        console.error('Unexpected error in getSubscription:', catchError);
+    if (!user) {
         return { subscription: null, user: null };
     }
+
+    // Query for user's subscription - will return null if user has no subscription
+    const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*, prices(*, products(*))')
+        .eq('user_id', user.id)
+        .in('status', ['trialing', 'active'])
+        .maybeSingle(); // This returns null if no matching record found
+
+    if (error) {
+        console.error('Subscription query error:', error);
+        // Return user but no subscription if there's an error
+        return { subscription: null, user };
+    }
+
+    // data will be null if user has no subscription record
+    // This is the expected behavior for users who haven't subscribed yet
+    return { subscription: (data as Subscription | null), user };
 }
 
 export const getUserDetails = async (): Promise<UserDetails | null> => {
