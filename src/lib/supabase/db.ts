@@ -27,18 +27,22 @@ export const getSubscription = async (): Promise<{ subscription: Subscription | 
         return { subscription: null, user: null };
     }
 
+    // Query for user's subscription - will return null if user has no subscription
     const { data, error } = await supabase
         .from('subscriptions')
-        .select('*')
-        .eq('user_id', user.id) // Filter by user ID
+        .select('*, prices(*, products(*))')
+        .eq('user_id', user.id)
         .in('status', ['trialing', 'active'])
-        .maybeSingle();
+        .maybeSingle(); // This returns null if no matching record found
 
     if (error) {
-        console.log(error.message);
+        console.error('Subscription query error:', error);
+        // Return user but no subscription if there's an error
+        return { subscription: null, user };
     }
 
-    // If no subscription found for this user, data will be null
+    // data will be null if user has no subscription record
+    // This is the expected behavior for users who haven't subscribed yet
     return { subscription: (data as Subscription | null), user };
 }
 
