@@ -524,6 +524,7 @@ export default function ProfileManager({ session }: { session: any }) {
         isOpen={showPlanModal}
         onClose={() => setShowPlanModal(false)}
         products={products}
+        loading={loadingProducts}
         currentSubscription={subscription}
       />
     </div>

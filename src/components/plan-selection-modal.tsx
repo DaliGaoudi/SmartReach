@@ -11,13 +11,15 @@ interface PlanSelectionModalProps {
   onClose: () => void;
   products: ProductWithPrice[];
   currentSubscription: any;
+  loading: boolean;
 }
 
 export default function PlanSelectionModal({ 
   isOpen, 
   onClose, 
   products, 
-  currentSubscription 
+  currentSubscription,
+  loading
 }: PlanSelectionModalProps) {
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
   const [priceIdLoading, setPriceIdLoading] = useState<string>();
