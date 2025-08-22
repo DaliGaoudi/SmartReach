@@ -30,6 +30,7 @@ export const getSubscription = async (): Promise<{ subscription: Subscription | 
     const { data, error } = await supabase
         .from('subscriptions')
         .select('*, prices(*, products(*))')
+        .eq('user_id', user.id) // Filter by user ID
         .in('status', ['trialing', 'active'])
         .maybeSingle();
 
@@ -37,6 +38,7 @@ export const getSubscription = async (): Promise<{ subscription: Subscription | 
         console.log(error.message);
     }
 
+    // If no subscription found for this user, data will be null
     return { subscription: (data as Subscription | null), user };
 }
 
