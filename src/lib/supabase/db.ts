@@ -29,7 +29,7 @@ export const getSubscription = async (): Promise<{ subscription: Subscription | 
 
     const { data, error } = await supabase
         .from('subscriptions')
-        .select('*, prices(*, products(*))')
+        .select('*')
         .eq('user_id', user.id) // Filter by user ID
         .in('status', ['trialing', 'active'])
         .maybeSingle();
