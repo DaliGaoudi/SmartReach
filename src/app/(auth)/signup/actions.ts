@@ -48,6 +48,7 @@ export async function signup(formData: FormData) {
         user_id: data.user.id,
         status: "trialing",
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         //current_period_start: new Date().toISOString(),
         //current_period_end: new Date().toISOString(),
       });
