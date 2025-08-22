@@ -451,6 +451,12 @@ export default function ContactsListPage() {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session) return;
 
+      // Only check for user_tokens if the user signed in with 'google'
+      if (session.user.app_metadata.provider !== 'google') {
+        setGmailConnected(false);
+        return;
+      }
+
       try {
         const { data: tokens, error: tokenError } = await supabase
           .from('user_tokens')

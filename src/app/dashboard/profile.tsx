@@ -1,3 +1,4 @@
+
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
@@ -130,11 +131,16 @@ export default function ProfileManager({ session }: { session: any }) {
   useEffect(() => {
     const checkGmailStatus = async () => {
       if (!session?.user?.id) return;
+      // Only check for user_tokens if the user signed in with 'google'
+      if (session.user.app_metadata.provider !== 'google') {
+        setGmailStatus({ connected: false, loading: false });
+        return;
+      }
       try {
         setGmailStatus(prev => ({ ...prev, loading: true }));
         const { data, error } = await supabase
-          .from('user_tokens')
-          .select('access_token, refresh_token, expires_at')
+          .from("user_tokens")
+          .select("access_token, refresh_token, expires_at")
           .eq("user_id", session.user.id)
           .single();
 
@@ -550,3 +556,5 @@ export default function ProfileManager({ session }: { session: any }) {
     </div>
   );
 }
+
+
