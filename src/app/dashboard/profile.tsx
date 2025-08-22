@@ -1,3 +1,4 @@
+
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
@@ -10,6 +11,7 @@ const isSoftLaunch = process.env.SOFT_LAUNCH === 'true';
 import { formatUsageMessage } from '@/lib/subscription-limits-client';
 import { getUsageStats } from './actions';
 import { ProductWithPrice } from '@/types';
+import { CheckIcon } from 'lucide-react';
 
 type ResumeFile = {
   name: string;
@@ -83,12 +85,19 @@ export default function ProfileManager({ session }: { session: any }) {
             .from('subscriptions')
             .select('*')
             .eq('user_id', session.user.id)
-            .single(),
+            .in('status', ['trialing', 'active'])
+            .maybeSingle(), // Use maybeSingle() instead of single() to avoid errors when no rows found
           getUsageStats()
         ]);
 
-        if (subscriptionData.data && !subscriptionData.error) {
+        // Handle subscription data - only set if we have valid subscription data
+        if (subscriptionData.data && !subscriptionData.error && subscriptionData.data.id) {
           setSubscription(subscriptionData.data);
+          console.log('Fetched subscription data:', subscriptionData.data);
+        } else {
+          // Explicitly set to null if no valid subscription found
+          setSubscription(null);
+          console.log('No active subscription found or error occurred:', subscriptionData.error);
         }
         
         if (usageData) {
@@ -236,6 +245,8 @@ export default function ProfileManager({ session }: { session: any }) {
 
   // Updated handleManageBilling function
   const handleManageBilling = () => {
+    console.log('handleManageBilling called - isSoftLaunch:', isSoftLaunch, 'subscription:', subscription);
+    
     if (isSoftLaunch) {
       // During soft launch, redirect to waitlist instead of Stripe
       window.location.href = '/waitlist';
@@ -244,17 +255,21 @@ export default function ProfileManager({ session }: { session: any }) {
 
     // If user already has a subscription, go to Stripe billing portal
     if (subscription) {
+      console.log('User has subscription, redirecting to Stripe billing portal');
       startTransition(async () => {
         try {
           const { url } = await stripeRedirect('/dashboard/profile');
           if (url) window.location.href = url;
+          router.refresh(); // Force a refresh after Stripe redirect
         } catch (error) {
           alert(`Error redirecting to billing: ${(error as Error).message}`);
         }
       });
     } else {
       // If no subscription, show plan selection modal
+      console.log('No subscription found, showing plan selection modal');
       setShowPlanModal(true);
+      router.refresh(); // Force a refresh when showing the modal
     }
   };
 
@@ -397,137 +412,144 @@ export default function ProfileManager({ session }: { session: any }) {
                 <div className="bg-zinc-800/50 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-medium text-zinc-300">Plan Features</h3>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      usageStats.isPremium 
+                        ? 'bg-green-500/20 text-green-400' 
+                        : 'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      {usageStats.isPremium ? 'Premium' : 'Free'}
+                    </span>
                   </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <ul className="space-y-2">
+                    <li className="flex items-center text-sm">
+                      <CheckIcon className="h-4 w-4 text-green-400 mr-2" />
                       <span className="text-zinc-300">AI Email Generation</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                    </li>
+                    <li className="flex items-center text-sm">
+                      <CheckIcon className="h-4 w-4 text-green-400 mr-2" />
                       <span className="text-zinc-300">Direct Gmail Sending</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                    </li>
+                    <li className="flex items-center text-sm">
+                      <CheckIcon className="h-4 w-4 text-green-400 mr-2" />
                       <span className="text-zinc-300">Contact Management</span>
-                    </div>
+                    </li>
                     {usageStats.isPremium && (
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-pink-400 rounded-full"></div>
-                        <span className="text-pink-400 font-medium">Unlimited Emails</span>
-                      </div>
+                      <>
+                        <li className="flex items-center text-sm">
+                          <CheckIcon className="h-4 w-4 text-green-400 mr-2" />
+                          <span className="text-zinc-300">Advanced Analytics</span>
+                        </li>
+                        <li className="flex items-center text-sm">
+                          <CheckIcon className="h-4 w-4 text-green-400 mr-2" />
+                          <span className="text-zinc-300">Priority Support</span>
+                        </li>
+                      </>
                     )}
-                  </div>
+                  </ul>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Gmail Connection Card */}
-        <div className="bg-black border border-zinc-700/50 rounded-xl shadow-lg overflow-hidden">
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-white">Gmail Connection</h2>
-            <p className="mt-1 text-zinc-300">Connect your Gmail account to send personalized emails directly.</p>
-          </div>
-          <div className="border-t border-zinc-700/50 p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className={`w-3 h-3 rounded-full mr-3 ${gmailStatus.connected ? 'bg-green-400' : 'bg-red-400'}`}></div>
-                <div>
-                  <p className="text-white font-medium">
-                    {gmailStatus.loading ? 'Checking...' : gmailStatus.connected ? 'Connected' : 'Not Connected'}
-                  </p>
-                  <p className="text-sm text-zinc-400">
-                    {gmailStatus.connected ? 'Your Gmail account is connected and ready to use.' : 'Connect your Gmail to start sending emails.'}
-                  </p>
-                </div>
-              </div>
-              {!gmailStatus.connected && !gmailStatus.loading && (
-                <button 
-                  onClick={connectGmail}
-                  className="inline-flex items-center justify-center h-10 px-6 rounded-xl bg-blue-500 text-zinc-50 font-semibold text-base shadow-md hover:bg-blue-600 transition-colors duration-200"
-                >
-                  Connect Gmail
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
         {/* Resume Management Card */}
-        <div className="bg-black border border-zinc-700/50 rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-black border border-zinc-700/50 rounded-xl shadow-lg overflow-hidden mb-8">
           <div className="p-6">
             <h2 className="text-2xl font-bold text-white">Resume Management</h2>
-            <p className="mt-1 text-zinc-300">Upload and manage your resume for personalized email generation.</p>
+            <p className="mt-1 text-zinc-300">Upload and manage your resumes for personalized outreach.</p>
           </div>
           <div className="border-t border-zinc-700/50 p-6 space-y-6">
             <div>
-              <label htmlFor="resume" className="block text-sm font-medium text-zinc-300 mb-2">Upload New Resume</label>
-              <input 
-                type="file" 
-                id="resume" 
-                accept=".pdf,.doc,.docx" 
-                onChange={uploadResume} 
-                disabled={uploading}
-                className="block w-full text-sm text-zinc-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-500 file:text-white hover:file:bg-pink-600 file:cursor-pointer cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" 
-              />
-              {uploading && <p className="mt-2 text-sm text-zinc-400">Uploading...</p>}
+              <label htmlFor="resume_upload" className="block text-sm font-medium text-zinc-300">Upload New Resume</label>
+              <div className="mt-1 flex items-center space-x-2">
+                <input
+                  type="file"
+                  id="resume_upload"
+                  accept=".pdf,.doc,.docx"
+                  onChange={uploadResume}
+                  disabled={uploading}
+                  className="block w-full text-sm text-zinc-300
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-pink-500 file:text-white
+                    hover:file:bg-pink-600"
+                />
+                {uploading && <p className="text-sm text-zinc-400">Uploading...</p>}
+              </div>
             </div>
-            
-            {loadingResumes ? (
-              <p className="text-zinc-400">Loading resumes...</p>
-            ) : resumeFiles.length > 0 ? (
-              <div>
-                <h3 className="text-lg font-medium text-white mb-4">Your Resumes</h3>
-                <div className="space-y-3">
+            <div>
+              <h3 className="text-lg font-medium text-zinc-300 mb-2">Your Uploaded Resumes</h3>
+              {loadingResumes ? (
+                <p className="text-zinc-400">Loading resumes...</p>
+              ) : resumeFiles.length === 0 ? (
+                <p className="text-zinc-400">No resumes uploaded yet.</p>
+              ) : (
+                <ul className="space-y-2">
                   {resumeFiles.map((file) => (
-                    <div key={file.name} className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg">
-                      <div className="flex-1">
-                        <p className="text-white font-medium">{file.name}</p>
-                        <p className="text-sm text-zinc-400">
-                          Uploaded: {formatDate(file.created_at)}
-                          {profile?.resume_path === `${session.user.id}/${file.name}` && (
-                            <span className="ml-2 px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">Active</span>
-                          )}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        {profile?.resume_path !== `${session.user.id}/${file.name}` && (
+                    <li key={file.id} className="flex items-center justify-between bg-zinc-800/50 p-3 rounded-md">
+                      <span className="text-zinc-300 text-sm">{file.name}</span>
+                      <div className="flex items-center space-x-2">
+                        {profile?.resume_path === `${session.user.id}/${file.name}` ? (
+                          <span className="text-green-400 text-xs font-medium">Selected</span>
+                        ) : (
                           <button
                             onClick={() => selectResume(file.name)}
-                            className="px-3 py-1 bg-pink-500 text-white text-sm rounded-md hover:bg-pink-600 transition-colors"
+                            className="px-3 py-1 bg-blue-500 text-white text-xs rounded-md hover:bg-blue-600"
                           >
                             Select
                           </button>
                         )}
                         <button
                           onClick={() => deleteResume(file.name)}
-                          className="px-3 py-1 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 transition-colors"
+                          className="px-3 py-1 bg-red-500 text-white text-xs rounded-md hover:bg-red-600"
                         >
                           Delete
                         </button>
                       </div>
-                    </div>
+                    </li>
                   ))}
-                </div>
-              </div>
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Gmail Integration Card */}
+        <div className="bg-black border border-zinc-700/50 rounded-xl shadow-lg overflow-hidden mb-8">
+          <div className="p-6">
+            <h2 className="text-2xl font-bold text-white">Gmail Integration</h2>
+            <p className="mt-1 text-zinc-300">Connect your Gmail account to send emails directly from SmartSendr.</p>
+          </div>
+          <div className="border-t border-zinc-700/50 p-6">
+            {gmailStatus.loading ? (
+              <p className="text-zinc-400">Checking Gmail status...</p>
+            ) : gmailStatus.connected ? (
+              <p className="text-green-400 font-medium">Gmail Connected</p>
             ) : (
-              <p className="text-zinc-400">No resumes uploaded yet.</p>
+              <button
+                onClick={connectGmail}
+                className="w-full inline-flex items-center justify-center h-10 px-6 rounded-xl bg-blue-500 text-zinc-50 font-semibold text-base shadow-md hover:bg-blue-600 transition-colors duration-200"
+              >
+                Connect Gmail
+              </button>
             )}
           </div>
         </div>
+
       </div>
 
-      {/* Plan Selection Modal */}
-      <PlanSelectionModal
-        isOpen={showPlanModal}
-        onClose={() => setShowPlanModal(false)}
-        products={products}
-        loading={loadingProducts}
-        currentSubscription={subscription}
-      />
+      {showPlanModal && (
+          <PlanSelectionModal
+            isOpen={showPlanModal}
+            onClose={() => setShowPlanModal(false)}
+            products={products}
+            loading={loadingProducts}
+            currentSubscription={subscription}
+          />
+      )}
     </div>
   );
 }
+
 
