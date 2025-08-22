@@ -19,31 +19,47 @@ export const getProducts = async (): Promise<Product[]> => {
     return (data as any) || [];
 }
 
-export const getSubscription = async (): Promise<{ subscription: Subscription | null, user: any }> => {
+export const getSubscription = async () => {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    
+    try {
+        const { data: authData, error: authError } = await supabase.auth.getUser();
+        const user = authData.user;
 
-    if (!user) {
-        return { subscription: null, user: null };
+        if (!user) {
+            return { subscription: null, user: null } as const;
+        }
+
+        const { data, error } = await supabase
+            .from('subscriptions')
+            .select('*, prices(*, products(*))')
+            .eq('user_id', user.id)
+            .in('status', ['trialing', 'active'])
+            .maybeSingle();
+
+        if (error) {
+            console.error('Subscription Query Error:', error);
+            return { subscription: null, user } as const;
+        }
+
+        // If no data, return with a clear intent
+        if (!data) {
+            return { 
+                subscription: null, 
+                user,
+                noActiveSubscription: true 
+            } as const;
+        }
+
+        return { 
+            subscription: data as Subscription, 
+            user 
+        } as const;
+
+    } catch (catchError) {
+        console.error('Unexpected error in getSubscription:', catchError);
+        return { subscription: null, user: null } as const;
     }
-
-    // Query for user's subscription - will return null if user has no subscription
-    const { data, error } = await supabase
-        .from('subscriptions')
-        .select('*, prices(*, products(*))')
-        .eq('user_id', user.id)
-        .in('status', ['trialing', 'active'])
-        .maybeSingle(); // This returns null if no matching record found
-
-    if (error) {
-        console.error('Subscription query error:', error);
-        // Return user but no subscription if there's an error
-        return { subscription: null, user };
-    }
-
-    // data will be null if user has no subscription record
-    // This is the expected behavior for users who haven't subscribed yet
-    return { subscription: (data as Subscription | null), user };
 }
 
 export const getUserDetails = async (): Promise<UserDetails | null> => {
