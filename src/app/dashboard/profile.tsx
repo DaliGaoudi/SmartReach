@@ -89,6 +89,7 @@ export default function ProfileManager({ session }: { session: any }) {
 
         if (subscriptionData.data && !subscriptionData.error) {
           setSubscription(subscriptionData.data);
+          console.log('Fetched subscription data:', subscriptionData.data);
         }
         
         if (usageData) {
@@ -248,6 +249,7 @@ export default function ProfileManager({ session }: { session: any }) {
         try {
           const { url } = await stripeRedirect('/dashboard/profile');
           if (url) window.location.href = url;
+          router.refresh(); // Force a refresh after Stripe redirect
         } catch (error) {
           alert(`Error redirecting to billing: ${(error as Error).message}`);
         }
@@ -255,6 +257,7 @@ export default function ProfileManager({ session }: { session: any }) {
     } else {
       // If no subscription, show plan selection modal
       setShowPlanModal(true);
+      router.refresh(); // Force a refresh when showing the modal
     }
   };
 
