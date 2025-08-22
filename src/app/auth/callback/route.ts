@@ -108,9 +108,9 @@ export async function GET(request: Request) {
         .insert({
           user_id: data.session.user.id,
           status: "trialing",
-          created: new Date().toISOString(),
-          current_period_start: new Date().toISOString(),
-          current_period_end: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          //current_period_start: new Date().toISOString(),
+          //current_period_end: new Date().toISOString(),
         });
 
       if (insertError) {
