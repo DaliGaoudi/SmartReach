@@ -1,4 +1,3 @@
-
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
@@ -136,7 +135,7 @@ export default function ProfileManager({ session }: { session: any }) {
         const { data, error } = await supabase
           .from('user_tokens')
           .select('access_token, refresh_token, expires_at')
-          .eq('user_id', session.user.id)
+          .eq("user_id", session.user.id)
           .single();
 
         if (error && error.code !== 'PGRST116') console.error('Error checking Gmail status:', error);
@@ -551,5 +550,3 @@ export default function ProfileManager({ session }: { session: any }) {
     </div>
   );
 }
-
-
