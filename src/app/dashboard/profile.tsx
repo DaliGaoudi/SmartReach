@@ -11,6 +11,7 @@ const isSoftLaunch = process.env.SOFT_LAUNCH === 'true';
 import { formatUsageMessage } from '@/lib/subscription-limits-client';
 import { getUsageStats } from './actions';
 import { ProductWithPrice } from '@/types';
+import { CheckIcon } from 'lucide-react';
 
 type ResumeFile = {
   name: string;
