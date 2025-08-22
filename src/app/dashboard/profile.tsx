@@ -540,12 +540,12 @@ export default function ProfileManager({ session }: { session: any }) {
       </div>
 
       {showPlanModal && (
-        <PlanSelectionModal
-          show={showPlanModal}
-          onClose={() => setShowPlanModal(false)}
-          products={products}
-          loading={loadingProducts}
-        />
+          <PlanSelectionModal
+            isOpen={showPlanModal}
+            onClose={() => setShowPlanModal(false)}
+            products={products}
+            loading={loadingProducts}
+          />
       )}
     </div>
   );
