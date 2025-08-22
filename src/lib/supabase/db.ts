@@ -27,23 +27,45 @@ export const getSubscription = async (): Promise<{ subscription: Subscription | 
         return { subscription: null, user: null };
     }
 
-    // Query for user's subscription - will return null if user has no subscription
-    const { data, error } = await supabase
-        .from('subscriptions')
-        .select('*, prices(*, products(*))')
-        .eq('user_id', user.id)
-        .in('status', ['trialing', 'active'])
-        .maybeSingle(); // This returns null if no matching record found
+    try {
+        // Add more detailed logging
+        console.log('Querying subscriptions for user:', user.id);
 
-    if (error) {
-        console.error('Subscription query error:', error);
-        // Return user but no subscription if there's an error
+        const { data, error } = await supabase
+            .from('subscriptions')
+            .select('*, prices(*, products(*))')
+            .eq('user_id', user.id)
+            .in('status', ['trialing', 'active'])
+            .maybeSingle();
+
+        // Enhanced error handling
+        if (error) {
+            console.error('Detailed Subscription Query Error:', {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+            });
+            
+            // Check specific error scenarios
+            if (error.code === 'PGRST116') {
+                console.error('Possible RLS Policy Violation');
+            }
+
+            return { subscription: null, user };
+        }
+
+        // Log the returned data
+        console.log('Subscription Query Result:', data);
+
+        return { 
+            subscription: (data as Subscription | null), 
+            user 
+        };
+    } catch (catchError) {
+        console.error('Unexpected error in getSubscription:', catchError);
         return { subscription: null, user };
     }
-
-    // data will be null if user has no subscription record
-    // This is the expected behavior for users who haven't subscribed yet
-    return { subscription: (data as Subscription | null), user };
 }
 
 export const getUserDetails = async (): Promise<UserDetails | null> => {
